@@ -1,0 +1,36 @@
+{
+  "name": "19ergmbh-de",
+  "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:api": "pnpm --filter @19er/shared build && turbo dev --filter=@19er/api",
+    "dev:admin": "turbo dev --filter=@19er/admin -- --host",
+    "setup:hosts": "powershell -ExecutionPolicy Bypass -File scripts/setup-19er-hosts.ps1",
+    "lint": "turbo lint",
+    "db:generate": "turbo db:generate --filter=@19er/db",
+    "db:push": "turbo db:push --filter=@19er/db",
+    "db:migrate": "pnpm --filter @19er/db db:migrate",
+    "db:seed": "pnpm --filter @19er/db db:seed",
+    "db:studio": "pnpm --filter @19er/db db:studio",
+    "test": "turbo test --filter=@19er/api",
+    "test:api": "pnpm --filter @19er/api test"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  }
+}

@@ -1,0 +1,210 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+//////////////////////////////
+// ENUMS
+//////////////////////////////
+
+enum UserRole {
+    ADMIN
+    EMPLOYEE
+}
+
+enum AttendanceStatus {
+    PRESENT
+    ABSENT
+    LATE
+}
+
+enum ShiftStatus {
+    SCHEDULED
+    CONFIRMED
+    COMPLETED
+    CANCELLED
+}
+
+enum ShiftEmployeeStatus {
+    SCHEDULED
+    CONFIRMED
+    ABSENT
+    COMPLETED
+}
+
+enum NotificationChannel {
+    EMAIL
+    WHATSAPP
+}
+
+enum NotificationType {
+    SCHEDULE
+    SALARY
+}
+
+enum NotificationStatus {
+    PENDING
+    SENT
+    FAILED
+}
+
+//////////////////////////////
+// USERS
+//////////////////////////////
+
+model User {
+    id String @id @default(cuid())
+
+    fullName String
+    email    String @unique
+    phone    String @unique
+    password String
+
+    role UserRole @default(EMPLOYEE)
+
+    hourlyRate Float
+    isActive   Boolean @default(true)
+
+    shiftEmployees ShiftEmployee[]
+    attendances    Attendance[]
+    createdShifts  Shift[]
+    notifications  Notification[]
+    payrolls       Payroll[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////
+// SHIFTS
+//////////////////////////////
+
+model Shift {
+    id String @id @default(cuid())
+
+    title        String?
+    startTime    DateTime
+    endTime      DateTime
+    notes        String?
+    breakMinutes Int      @default(0)
+
+    status ShiftStatus @default(SCHEDULED)
+
+    createdById String
+    createdBy   User   @relation(fields: [createdById], references: [id])
+
+    employees   ShiftEmployee[]
+    attendances Attendance[]
+
+    createdAt DateTime @default(now())
+}
+
+//////////////////////////////
+// SHIFT EMPLOYEES
+//////////////////////////////
+
+model ShiftEmployee {
+    id String @id @default(cuid())
+
+    shiftId    String
+    employeeId String
+
+    status ShiftEmployeeStatus @default(SCHEDULED)
+
+    shift    Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+    employee User  @relation(fields: [employeeId], references: [id])
+
+    createdAt DateTime @default(now())
+
+    @@unique([shiftId, employeeId])
+    @@index([employeeId])
+    @@index([shiftId])
+}
+
+//////////////////////////////
+// ATTENDANCE
+//////////////////////////////
+
+model Attendance {
+    id String @id @default(cuid())
+
+    employeeId String
+    shiftId    String
+
+    status AttendanceStatus
+
+    checkIn  DateTime?
+    checkOut DateTime?
+
+    notes String?
+
+    employee User  @relation(fields: [employeeId], references: [id])
+    shift    Shift @relation(fields: [shiftId], references: [id])
+
+    @@unique([employeeId, shiftId])
+}
+
+//////////////////////////////
+// PAYROLL
+//////////////////////////////
+
+model Payroll {
+    id String @id @default(cuid())
+
+    employeeId String
+    employee   User   @relation(fields: [employeeId], references: [id])
+
+    fromDate DateTime
+    toDate   DateTime
+
+    totalHours Float
+    hourlyRate Float
+    salary     Float
+
+    paidAmount Float?
+    isPaid     Boolean   @default(false)
+    paidAt     DateTime?
+
+    createdAt    DateTime    @default(now())
+    payrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id])
+    payrollRunId String?
+    @@index([payrollRunId])
+}
+
+//////////////////////////////
+// NOTIFICATIONS
+//////////////////////////////
+
+model Notification {
+    id String @id @default(cuid())
+
+    employeeId String
+
+    type    NotificationType
+    channel NotificationChannel
+    status  NotificationStatus  @default(PENDING)
+
+    title   String
+    message String
+
+    sentAt DateTime?
+
+    employee User @relation(fields: [employeeId], references: [id])
+
+    createdAt DateTime @default(now())
+}
+
+model PayrollRun {
+    id String @id @default(cuid())
+
+    fromDate DateTime
+    toDate   DateTime
+
+    createdAt DateTime @default(now())
+
+    payrolls Payroll[]
+}
