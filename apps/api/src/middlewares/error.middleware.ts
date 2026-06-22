@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "@19er/shared";
+import { Prisma } from "@19er/db";
+import { AppError, ConflictError, NotFoundError } from "@19er/shared";
 import { ZodError } from "zod";
 
 export function errorHandler(
@@ -24,6 +25,28 @@ export function errorHandler(
       details: err.flatten().fieldErrors,
     });
     return;
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === "P2025") {
+      const notFound = new NotFoundError("Resource not found");
+      res.status(notFound.statusCode).json({
+        success: false,
+        error: notFound.message,
+        code: err.code,
+      });
+      return;
+    }
+
+    if (err.code === "P2003") {
+      const conflict = new ConflictError("Cannot delete: related records still exist");
+      res.status(conflict.statusCode).json({
+        success: false,
+        error: conflict.message,
+        code: err.code,
+      });
+      return;
+    }
   }
 
   console.error(err);

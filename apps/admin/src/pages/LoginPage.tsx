@@ -13,8 +13,8 @@ import { Navigate } from "react-router-dom";
 export function LoginPage() {
   const { login, isAuthenticated, isLoading } = useAuth();
   const { t } = useI18n();
-  const [email, setEmail] = useState("admin@19ergmbh.de");
-  const [password, setPassword] = useState("Admin123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 

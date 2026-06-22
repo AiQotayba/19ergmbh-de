@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate, requireAnyRole);
 
 router.get("/", meController.getProfileHandler);
+router.put("/", meController.updateProfileHandler);
 router.get("/shifts", meController.getMyShiftsHandler);
 router.get("/attendance", meController.getMyAttendanceHandler);
 router.get("/payroll", meController.getMyPayrollHandler);

@@ -3,7 +3,21 @@ import type { AuthenticatedRequest } from "@19er/auth";
 import { sendSuccess } from "../../shared/response.js";
 import { paramId } from "../../shared/params.js";
 import * as payrollService from "./payroll.service.js";
-import { payPayrollSchema, payrollRunSchema } from "./payroll.validators.js";
+import { payPayrollSchema, payrollPreviewSchema, payrollRunSchema } from "./payroll.validators.js";
+
+export async function previewPayrollHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const input = payrollPreviewSchema.parse(req.body);
+    const result = await payrollService.previewPayroll(input);
+    sendSuccess(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function runPayrollHandler(
   req: AuthenticatedRequest,
@@ -40,6 +54,19 @@ export async function getPayrollRunHandler(
   try {
     const run = await payrollService.getPayrollRunById(paramId(req.params));
     sendSuccess(res, run);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deletePayrollRunHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const result = await payrollService.deletePayrollRun(paramId(req.params));
+    sendSuccess(res, result);
   } catch (err) {
     next(err);
   }

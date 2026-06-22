@@ -5,6 +5,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { PayrollPage } from "@/pages/PayrollPage";
+import { PayrollRunDetailPage } from "@/pages/PayrollRunDetailPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ShiftsPage } from "@/pages/ShiftsPage";
 import { UsersPage } from "@/pages/UsersPage";
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="shifts" element={<ShiftsPage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="payroll" element={<PayrollPage />} />
+        <Route path="payroll/runs/:id" element={<PayrollRunDetailPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

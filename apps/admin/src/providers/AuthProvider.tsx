@@ -7,24 +7,26 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { UserRole } from "@19er/types";
 import { api, setUnauthorizedHandler } from "@/lib/api-client";
-import { clearTokens, getRefreshToken, getToken, setTokens } from "@/lib/auth-storage";
+import {
+  clearTokens,
+  getCachedUser,
+  getRefreshToken,
+  getToken,
+  hasStoredSession,
+  setCachedUser,
+  setTokens,
+  type AuthUser,
+} from "@/lib/auth-storage";
+import { refreshAccessToken } from "@/lib/auth-session";
 
-export interface AuthUser {
-  id: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  role: UserRole;
-  hourlyRate?: number;
-  isActive?: boolean;
-}
+export type { AuthUser };
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isValidating: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -32,9 +34,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function readInitialUser(): AuthUser | null {
+  if (!hasStoredSession()) return null;
+  return getCachedUser();
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(readInitialUser);
+  const [isLoading, setIsLoading] = useState(() => !readInitialUser() && hasStoredSession());
+  const [isValidating, setIsValidating] = useState(() => hasStoredSession());
 
   const refreshProfile = useCallback(async () => {
     const token = getToken();
@@ -50,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setCachedUser(response.data);
     setUser(response.data);
   }, []);
 
@@ -62,10 +71,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void (async () => {
+      if (!hasStoredSession()) {
+        setUser(null);
+        setIsLoading(false);
+        setIsValidating(false);
+        return;
+      }
+
+      if (!getToken() && getRefreshToken()) {
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+          setUser(null);
+          setIsLoading(false);
+          setIsValidating(false);
+          return;
+        }
+      }
+
       try {
         await refreshProfile();
       } finally {
         setIsLoading(false);
+        setIsValidating(false);
       }
     })();
   }, [refreshProfile]);
@@ -81,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setTokens(response.data.tokens.accessToken, response.data.tokens.refreshToken);
+    setCachedUser(response.data.user);
     setUser(response.data.user);
+    setIsValidating(false);
   }, []);
 
   const logout = useCallback(async () => {
@@ -100,11 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: !!user,
       isLoading,
+      isValidating,
       login,
       logout,
       refreshProfile,
     }),
-    [user, isLoading, login, logout, refreshProfile],
+    [user, isLoading, isValidating, login, logout, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -28,6 +28,7 @@ interface NotificationRow {
   title: string;
   message: string;
   createdAt: string;
+  sentAt: string | null;
   employee: { fullName: string };
 }
 
@@ -86,9 +87,12 @@ export function NotificationsPage() {
       },
       { key: "title", label: t("shifts.shiftTitle") },
       {
-        key: "createdAt",
+        key: "sentAt",
         label: t("notifications.sent"),
-        render: (v) => format(new Date(String(v)), "MMM d, yyyy HH:mm"),
+        render: (_, row) =>
+          row.sentAt
+            ? format(new Date(row.sentAt), "MMM d, yyyy HH:mm")
+            : "—",
       },
     ],
     [t],

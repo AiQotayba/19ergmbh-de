@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { PaginatedResponse } from "@19er/types";
+import { refreshAccessToken } from "./auth-session";
 import { clearTokens, getToken } from "./auth-storage";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -29,6 +30,7 @@ export interface ApiOptions {
   showSuccessToast?: boolean;
   errorMessage?: string;
   successMessage?: string;
+  _retry?: boolean;
 }
 
 export interface ApiConfig {
@@ -133,6 +135,17 @@ class ApiCore {
       const apiResponse = await this.parseResponse<T>(response);
 
       if (response.status === 401) {
+        const isAuthRoute = endpoint.startsWith("/auth/");
+        if (!isAuthRoute && !requestOptions._retry) {
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            return this.request<T>(method, endpoint, data, {
+              ...requestOptions,
+              _retry: true,
+            });
+          }
+        }
+
         this.config.onUnauthorized?.();
         unauthorizedHandler?.();
         return {

@@ -3,6 +3,7 @@ import {
   bearer,
   createShiftAndAssign,
   createTestEmployee,
+  futureShiftSchedule,
   getApp,
   loginAsAdmin,
   uniqueSuffix,
@@ -215,8 +216,8 @@ describe("List query: shifts sort & filters", () => {
       `Filter Shift ${uniqueSuffix()}`,
     );
 
-    const fromDate = times.startTime.slice(0, 10);
-    const toDate = times.endTime.slice(0, 10);
+    const fromDate = times.fromDate;
+    const toDate = times.toDate;
 
     const byParams = await request(getApp())
       .get("/shifts")
@@ -244,8 +245,8 @@ describe("List query: shifts sort & filters", () => {
       .set(bearer(tokens.accessToken));
 
     expect(byStart.status).toBe(200);
-    const startTimes = byStart.body.data.items.map((s: { startTime: string }) =>
-      new Date(s.startTime).getTime(),
+    const startTimes = byStart.body.data.items.map((s: { fromDate: string }) =>
+      new Date(s.fromDate).getTime(),
     );
     expect(startTimes).toEqual([...startTimes].sort((a, b) => b - a));
 
@@ -255,8 +256,8 @@ describe("List query: shifts sort & filters", () => {
       .set(bearer(tokens.accessToken));
 
     expect(byEnd.status).toBe(200);
-    const endTimes = byEnd.body.data.items.map((s: { endTime: string }) =>
-      new Date(s.endTime).getTime(),
+    const endTimes = byEnd.body.data.items.map((s: { toDate: string }) =>
+      new Date(s.toDate).getTime(),
     );
     expect(endTimes).toEqual([...endTimes].sort((a, b) => a - b));
 
@@ -281,6 +282,112 @@ describe("List query: shifts sort & filters", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.items.some((s: { title: string | null }) => s.title === title)).toBe(true);
+  });
+
+  it("lists shift candidates with existing shifts on selected day", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift, times } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      `Candidate Shift ${uniqueSuffix()}`,
+    );
+
+    const fromDate = times.fromDate;
+
+    const res = await request(getApp())
+      .get("/shifts/candidates")
+      .query({ fromDate, toDate: fromDate, search: employee.user.fullName.split(" ").pop() })
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(res.status).toBe(200);
+    const match = res.body.data.items.find((u: { id: string }) => u.id === employee.user.id);
+    expect(match).toBeTruthy();
+    expect(match.shifts.some((s: { id: string }) => s.id === shift.id)).toBe(true);
+  });
+
+  it("creates shift with multiple employees in one request", async () => {
+    const admin = await loginAsAdmin();
+    const first = await createTestEmployee(admin.tokens.accessToken);
+    const second = await createTestEmployee(admin.tokens.accessToken);
+    const schedule = futureShiftSchedule(0);
+    schedule.fromDate = new Date(Date.now() + 72 * 3_600_000).toISOString().slice(0, 10);
+    schedule.toDate = schedule.fromDate;
+
+    const res = await request(getApp())
+      .post("/shifts")
+      .set(bearer(admin.tokens.accessToken))
+      .send({
+        title: `US-7 Multi ${uniqueSuffix()}`,
+        ...schedule,
+        employeeIds: [first.user.id, second.user.id],
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.employees).toHaveLength(2);
+  });
+
+  it("creates one ranged shift via POST /shifts/bulk", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const suffix = uniqueSuffix();
+    const fromDate = "2030-06-01";
+    const toDate = "2030-06-03";
+
+    const res = await request(getApp())
+      .post("/shifts/bulk")
+      .set(bearer(admin.tokens.accessToken))
+      .send({
+        title: `Bulk Shift ${suffix}`,
+        fromDate,
+        toDate,
+        dailyStartTime: "09:00",
+        dailyEndTime: "17:00",
+        employeeIds: [employee.user.id],
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.count).toBe(1);
+    expect(res.body.data.item.fromDate.slice(0, 10)).toBe(fromDate);
+    expect(res.body.data.item.toDate.slice(0, 10)).toBe(toDate);
+
+    const list = await request(getApp())
+      .get("/shifts")
+      .query({ search: `Bulk Shift ${suffix}` })
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(list.status).toBe(200);
+    expect(list.body.data.items).toHaveLength(1);
+  });
+
+  it("deletes shift that has attendance records", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      `Deletable Shift ${uniqueSuffix()}`,
+    );
+
+    const checkIn = await request(getApp())
+      .post("/attendance/check-in")
+      .set(bearer(employee.tokens.accessToken))
+      .send({ shiftId: shift.id });
+
+    expect(checkIn.status).toBe(201);
+
+    const del = await request(getApp())
+      .delete(`/shifts/${shift.id}`)
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(del.status).toBe(200);
+    expect(del.body.data.deleted).toBe(true);
+
+    const gone = await request(getApp())
+      .get(`/shifts/${shift.id}`)
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(gone.status).toBe(404);
   });
 });
 
@@ -367,8 +474,8 @@ describe("List query: attendance sort & filters", () => {
       .set(bearer(employee.tokens.accessToken))
       .send({ shiftId: shift.id });
 
-    const fromDate = times.startTime.slice(0, 10);
-    const toDate = times.endTime.slice(0, 10);
+    const fromDate = times.fromDate;
+    const toDate = times.toDate;
 
     const res = await request(getApp())
       .get("/attendance")

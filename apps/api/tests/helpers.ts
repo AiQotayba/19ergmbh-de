@@ -56,28 +56,40 @@ function uniqueShiftStart(hoursFromNow: number): number {
   return Date.now() + (hoursFromNow + jitterHours) * 3_600_000;
 }
 
-/** Unique shift window to avoid overlap with seed data and prior test runs. */
-export function futureShiftTimes(hoursFromNow = 24) {
-  const startMs = uniqueShiftStart(hoursFromNow);
-  const endMs = startMs + 8 * 3_600_000;
+/** Unique shift schedule to avoid overlap with seed data and prior test runs. */
+export function futureShiftSchedule(daySpan = 0) {
+  const startMs = uniqueShiftStart(24);
+  const from = new Date(startMs);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fromDate = `${from.getUTCFullYear()}-${pad(from.getUTCMonth() + 1)}-${pad(from.getUTCDate())}`;
+  const to = new Date(from);
+  to.setUTCDate(to.getUTCDate() + daySpan);
+  const toDate = `${to.getUTCFullYear()}-${pad(to.getUTCMonth() + 1)}-${pad(to.getUTCDate())}`;
   return {
-    startTime: new Date(startMs).toISOString(),
-    endTime: new Date(endMs).toISOString(),
+    fromDate,
+    toDate,
+    dailyStartTime: "09:00",
+    dailyEndTime: "17:00",
   };
 }
 
-/** Two intentionally overlapping windows, unique per invocation. */
+/** @deprecated Use futureShiftSchedule */
+export function futureShiftTimes(hoursFromNow = 24) {
+  const schedule = futureShiftSchedule(0);
+  const startTime = new Date(`${schedule.fromDate}T${schedule.dailyStartTime}`).toISOString();
+  const endTime = new Date(`${schedule.toDate}T${schedule.dailyEndTime}`).toISOString();
+  return { startTime, endTime, ...schedule };
+}
+
+/** Two intentionally overlapping schedules, unique per invocation. */
 export function overlappingShiftPair(hoursFromNow = 72) {
-  const startMs = uniqueShiftStart(hoursFromNow);
-  const endMs = startMs + 8 * 3_600_000;
+  const base = futureShiftSchedule(0);
   return {
-    shiftA: {
-      startTime: new Date(startMs).toISOString(),
-      endTime: new Date(endMs).toISOString(),
-    },
+    shiftA: { ...base },
     shiftB: {
-      startTime: new Date(startMs + 2 * 3_600_000).toISOString(),
-      endTime: new Date(endMs + 2 * 3_600_000).toISOString(),
+      ...base,
+      dailyStartTime: "11:00",
+      dailyEndTime: "19:00",
     },
   };
 }
@@ -112,11 +124,11 @@ export async function createShiftAndAssign(
   title = "User Story Shift",
   breakMinutes = 0,
 ) {
-  const times = futureShiftTimes(24);
+  const schedule = futureShiftSchedule(0);
   const shiftRes = await request(getApp())
     .post("/shifts")
     .set(bearer(adminToken))
-    .send({ title, ...times, breakMinutes });
+    .send({ title, ...schedule, breakMinutes });
 
   if (shiftRes.status !== 201) {
     throw new Error(`createShift failed (${shiftRes.status}): ${JSON.stringify(shiftRes.body)}`);
@@ -131,13 +143,20 @@ export async function createShiftAndAssign(
     throw new Error(`assign failed (${assignRes.status}): ${JSON.stringify(assignRes.body)}`);
   }
 
-  return { shift: shiftRes.body.data, times };
+  return { shift: shiftRes.body.data, times: schedule };
 }
 
-export function payrollPeriodForShift(times: { startTime: string; endTime: string }) {
-  const from = new Date(times.startTime);
+export function payrollPeriodForShift(times: {
+  fromDate: string;
+  toDate: string;
+  dailyStartTime?: string;
+  dailyEndTime?: string;
+  startTime?: string;
+  endTime?: string;
+}) {
+  const from = new Date(times.fromDate);
   from.setUTCHours(0, 0, 0, 0);
-  const to = new Date(times.endTime);
+  const to = new Date(times.toDate);
   to.setUTCHours(23, 59, 59, 999);
   return { fromDate: from.toISOString(), toDate: to.toISOString() };
 }

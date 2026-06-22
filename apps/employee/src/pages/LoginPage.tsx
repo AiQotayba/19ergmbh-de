@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { login } from "../lib/api";
+import { useAuth } from "../providers/AuthProvider";
 
-interface Props {
-  onSuccess: () => void;
-}
-
-export function LoginPage({ onSuccess }: Props) {
-  const [email, setEmail] = useState("anna.schmidt@19ergmbh.de");
-  const [password, setPassword] = useState("Employee123!");
+export function LoginPage() {
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +14,6 @@ export function LoginPage({ onSuccess }: Props) {
     setError("");
     try {
       await login(email, password);
-      onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -29,7 +25,7 @@ export function LoginPage({ onSuccess }: Props) {
     <div style={{ maxWidth: 400, margin: "80px auto", padding: 24, background: "#fff", borderRadius: 8 }}>
       <h1>19er GmbH</h1>
       <p>Employee portal</p>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => void handleSubmit(e)}>
         <label style={{ display: "block", marginBottom: 12 }}>
           Email
           <input
@@ -38,6 +34,7 @@ export function LoginPage({ onSuccess }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             style={{ width: "100%", padding: 8, marginTop: 4 }}
             required
+            autoComplete="email"
           />
         </label>
         <label style={{ display: "block", marginBottom: 12 }}>
@@ -48,6 +45,7 @@ export function LoginPage({ onSuccess }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             style={{ width: "100%", padding: 8, marginTop: 4 }}
             required
+            autoComplete="current-password"
           />
         </label>
         {error && <p style={{ color: "crimson" }}>{error}</p>}

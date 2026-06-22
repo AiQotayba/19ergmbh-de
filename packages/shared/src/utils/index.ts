@@ -68,9 +68,9 @@ function applySortDirection(value: unknown, direction: SortDirection): unknown {
 }
 
 export function parseDateRange(fromDate: string, toDate: string): { from: Date; to: Date } {
-  const from = new Date(fromDate);
-  const to = new Date(toDate);
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+  const from = parseOptionalDateBoundary(fromDate, "start");
+  const to = parseOptionalDateBoundary(toDate, "end");
+  if (!from || !to) {
     throw new Error("Invalid date range");
   }
   if (from > to) {

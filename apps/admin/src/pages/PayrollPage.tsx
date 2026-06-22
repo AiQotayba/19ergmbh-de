@@ -1,7 +1,7 @@
+import { CreatePayrollRunDialog } from "@/components/payroll/CreatePayrollRunDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { PageHeader } from "@/components/layouts/PageHeader";
 import { TabPanel, Tabs } from "@/components/ui/tabs";
 import { DataTable, type TableColumn } from "@/components/tables/DataTable";
@@ -9,8 +9,9 @@ import { useI18n } from "@/i18n";
 import { api } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface PayrollRunRow {
@@ -26,6 +27,7 @@ interface PayrollRow {
   fromDate: string;
   toDate: string;
   totalHours: number;
+  absenceHours: number;
   hourlyRate: number;
   salary: number;
   isPaid: boolean;
@@ -34,11 +36,10 @@ interface PayrollRow {
 
 export function PayrollPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("records");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [running, setRunning] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
 
   const runColumns: TableColumn<PayrollRunRow>[] = useMemo(
@@ -61,8 +62,20 @@ export function PayrollPage() {
         sortable: true,
         render: (v) => format(new Date(String(v)), "MMM d, yyyy HH:mm"),
       },
+      {
+        key: "id",
+        label: t("common.actions"),
+        render: (_, row) => (
+          <Button size="sm" variant="outline" onClick={() => navigate(`/payroll/runs/${row.id}`)}>
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" />
+              {t("payroll.viewRun")}
+            </span>
+          </Button>
+        ),
+      },
     ],
-    [t],
+    [navigate, t],
   );
 
   const payrollColumns: TableColumn<PayrollRow>[] = useMemo(
@@ -82,9 +95,15 @@ export function PayrollPage() {
       },
       {
         key: "totalHours",
-        label: t("payroll.hours"),
+        label: t("payroll.workedHours"),
         sortable: true,
         render: (v) => Number(v).toFixed(2),
+      },
+      {
+        key: "absenceHours",
+        label: t("payroll.absenceHours"),
+        sortable: true,
+        render: (v) => Number(v ?? 0).toFixed(2),
       },
       { key: "hourlyRate", label: t("payroll.rate"), render: (v) => `€${Number(v).toFixed(2)}` },
       {
@@ -106,29 +125,6 @@ export function PayrollPage() {
     ],
     [t],
   );
-
-  async function createRun() {
-    if (!fromDate || !toDate) {
-      toast.error(t("payroll.selectDates"));
-      return;
-    }
-    setRunning(true);
-    try {
-      const res = await api.post(
-        "/payroll/run",
-        { fromDate, toDate },
-        { showSuccessToast: true, successMessage: t("payroll.runCreated") },
-      );
-      if (res.isError) throw new Error(res.message);
-      queryClient.invalidateQueries({ queryKey: ["payroll-runs-table"] });
-      queryClient.invalidateQueries({ queryKey: ["payroll-table"] });
-      setTab("runs");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("payroll.runFailed"));
-    } finally {
-      setRunning(false);
-    }
-  }
 
   async function markPaid(id: string) {
     setPayingId(id);
@@ -177,27 +173,23 @@ export function PayrollPage() {
       <PageHeader title={t("payroll.title")} description={t("payroll.description")} />
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>{t("payroll.helpTitle")}</CardTitle>
+          <Button onClick={() => setCreateOpen(true)}>{t("payroll.createRun")}</Button>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <p className="text-sm text-muted">{t("payroll.helpText")}</p>
-          <div className="flex flex-wrap items-end gap-4">
-            <DateRangePicker
-              from={fromDate}
-              to={toDate}
-              onChange={(nextFrom, nextTo) => {
-                setFromDate(nextFrom);
-                setToDate(nextTo);
-              }}
-              placeholder={t("common.dateRange")}
-            />
-            <Button disabled={running || !fromDate || !toDate} onClick={() => void createRun()}>
-              {running ? <Loader2 className="h-4 w-4 animate-spin" /> : t("payroll.runPayroll")}
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <CreatePayrollRunDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(runId) => {
+          setTab("runs");
+          navigate(`/payroll/runs/${runId}`);
+        }}
+      />
 
       <Tabs
         tabs={[

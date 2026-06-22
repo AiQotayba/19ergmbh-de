@@ -6,9 +6,11 @@ const router = Router();
 
 router.use(authenticate);
 
+router.post("/preview", requireAdmin, payrollController.previewPayrollHandler);
 router.post("/run", requireAdmin, payrollController.runPayrollHandler);
 router.get("/runs", requireAdmin, payrollController.listPayrollRunsHandler);
 router.get("/runs/:id", requireAdmin, payrollController.getPayrollRunHandler);
+router.delete("/runs/:id", requireAdmin, payrollController.deletePayrollRunHandler);
 router.get("/", requireAnyRole, payrollController.listPayrollsHandler);
 router.get("/:id", requireAnyRole, payrollController.getPayrollHandler);
 router.put("/:id/pay", requireAdmin, payrollController.markPaidHandler);

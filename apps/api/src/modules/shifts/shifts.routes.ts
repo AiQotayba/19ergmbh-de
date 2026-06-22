@@ -7,9 +7,11 @@ const router = Router();
 router.use(authenticate);
 
 router.get("/", requireAnyRole, shiftsController.listShiftsHandler);
+router.get("/candidates", requireAdmin, shiftsController.listShiftCandidatesHandler);
 router.get("/employees", requireAnyRole, shiftsController.listShiftEmployeesHandler);
 router.post("/assign", requireAdmin, shiftsController.assignHandler);
 router.delete("/unassign", requireAdmin, shiftsController.unassignHandler);
+router.post("/bulk", requireAdmin, shiftsController.createShiftsBulkHandler);
 router.post("/", requireAdmin, shiftsController.createShiftHandler);
 router.get("/:id", requireAnyRole, shiftsController.getShiftHandler);
 router.put("/:id", requireAdmin, shiftsController.updateShiftHandler);

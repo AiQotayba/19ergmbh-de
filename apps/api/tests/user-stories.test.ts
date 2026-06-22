@@ -217,8 +217,10 @@ describe("US-7: Create shift", () => {
       .send({ title: "US-7 Shift", ...times });
 
     expect(res.status).toBe(201);
-    expect(res.body.data.startTime).toBe(times.startTime);
-    expect(res.body.data.endTime).toBe(times.endTime);
+    expect(res.body.data.fromDate.slice(0, 10)).toBe(times.fromDate);
+    expect(res.body.data.toDate.slice(0, 10)).toBe(times.toDate);
+    expect(res.body.data.dailyStartTime).toBe(times.dailyStartTime);
+    expect(res.body.data.dailyEndTime).toBe(times.dailyEndTime);
   });
 });
 
@@ -273,18 +275,15 @@ describe("US-10: Prevent shift overlap", () => {
       employee.user.id,
     );
 
-    const overlapStart = new Date(times.startTime);
-    overlapStart.setTime(overlapStart.getTime() + 2 * 3_600_000);
-    const overlapEnd = new Date(times.endTime);
-    overlapEnd.setTime(overlapEnd.getTime() + 2 * 3_600_000);
-
     const second = await request(getApp())
       .post("/shifts")
       .set(bearer(admin.tokens.accessToken))
       .send({
         title: "Overlap Shift",
-        startTime: overlapStart.toISOString(),
-        endTime: overlapEnd.toISOString(),
+        fromDate: times.fromDate,
+        toDate: times.toDate,
+        dailyStartTime: "11:00",
+        dailyEndTime: "19:00",
       });
 
     const conflict = await request(getApp())
@@ -309,7 +308,7 @@ describe("US-11: Calendar view", () => {
 
     const res = await request(getApp())
       .get("/shifts")
-      .query({ fromDate: times.startTime, toDate: times.endTime })
+      .query({ fromDate: times.fromDate, toDate: times.toDate })
       .set(bearer(admin.tokens.accessToken));
 
     expect(res.status).toBe(200);
@@ -383,8 +382,9 @@ describe("US-14: Shift details", () => {
       .set(bearer(employee.tokens.accessToken));
 
     expect(res.status).toBe(200);
-    expect(res.body.data.startTime).toBe(times.startTime);
-    expect(res.body.data.endTime).toBe(times.endTime);
+    expect(res.body.data.fromDate.slice(0, 10)).toBe(times.fromDate);
+    expect(res.body.data.dailyStartTime).toBe(times.dailyStartTime);
+    expect(res.body.data.dailyEndTime).toBe(times.dailyEndTime);
   });
 });
 
@@ -453,6 +453,72 @@ describe("US-17 & US-18: Payroll run and hours calculation", () => {
     expect(payroll.totalHours).toBeGreaterThan(0);
     expect(payroll.salary).toBeCloseTo(payroll.totalHours * payroll.hourlyRate, 2);
   });
+
+  it("accepts YYYY-MM-DD date strings for payroll run", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+
+    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+
+    const run = await request(getApp())
+      .post("/payroll/run")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    expect(run.status).toBe(201);
+    expect(run.body.data.payrolls.length).toBeGreaterThan(0);
+  });
+
+  it("counts absence hours when employee is marked absent", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+
+    await request(getApp())
+      .post("/attendance/absent")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ shiftId: shift.id, employeeId: employee.user.id });
+
+    const run = await request(getApp())
+      .post("/payroll/run")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    expect(run.status).toBe(201);
+    const payroll = run.body.data.payrolls.find(
+      (p: { employeeId: string }) => p.employeeId === employee.user.id,
+    );
+    expect(payroll).toBeDefined();
+    expect(payroll.absenceHours).toBeGreaterThan(0);
+    expect(payroll.totalHours).toBe(0);
+    expect(payroll.salary).toBe(0);
+  });
+
+  it("POST /payroll/preview returns lines without creating a run", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+
+    const before = await request(getApp())
+      .get("/payroll/runs")
+      .set(bearer(admin.tokens.accessToken));
+
+    const preview = await request(getApp())
+      .post("/payroll/preview")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    expect(preview.status).toBe(200);
+    expect(preview.body.data.lines.length).toBeGreaterThan(0);
+
+    const after = await request(getApp())
+      .get("/payroll/runs")
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(after.body.data.total).toBe(before.body.data.total);
+  });
 });
 
 describe("US-19: View payrolls", () => {
@@ -475,6 +541,32 @@ describe("US-19: View payrolls", () => {
       expect(one.body.data.id).toBe(id);
     }
   });
+
+  it("admin deletes a payroll run", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+
+    const run = await request(getApp())
+      .post("/payroll/run")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    const runId = run.body.data.payrollRun.id;
+
+    const del = await request(getApp())
+      .delete(`/payroll/runs/${runId}`)
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(del.status).toBe(200);
+
+    const gone = await request(getApp())
+      .get(`/payroll/runs/${runId}`)
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(gone.status).toBe(404);
+  });
 });
 
 describe("US-20: Excel export", () => {
@@ -482,7 +574,7 @@ describe("US-20: Excel export", () => {
 });
 
 describe("US-21: Salary notification on payroll", () => {
-  it("creates salary notification when payroll run completes", async () => {
+  it("does not auto-send salary notifications when payroll run completes", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
     const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
@@ -503,7 +595,7 @@ describe("US-21: Salary notification on payroll", () => {
     expect(notifications.status).toBe(200);
     expect(
       notifications.body.data.items.some((n: { type: string }) => n.type === "SALARY"),
-    ).toBe(true);
+    ).toBe(false);
   });
 });
 

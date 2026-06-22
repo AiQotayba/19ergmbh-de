@@ -6,6 +6,8 @@ import * as shiftsService from "./shifts.service.js";
 import {
   assignShiftSchema,
   createShiftSchema,
+  createShiftsBulkSchema,
+  listShiftCandidatesSchema,
   unassignShiftSchema,
   updateShiftSchema,
 } from "./shifts.validators.js";
@@ -45,6 +47,20 @@ export async function createShiftHandler(
     const input = createShiftSchema.parse(req.body);
     const shift = await shiftsService.createShift(req.user!.sub, input);
     sendSuccess(res, shift, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createShiftsBulkHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const input = createShiftsBulkSchema.parse(req.body);
+    const result = await shiftsService.createShiftsBulk(req.user!.sub, input);
+    sendSuccess(res, result, 201);
   } catch (err) {
     next(err);
   }
@@ -100,6 +116,20 @@ export async function unassignHandler(
     const input = unassignShiftSchema.parse(req.body);
     await shiftsService.unassignEmployee(input);
     sendSuccess(res, { unassigned: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listShiftCandidatesHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const query = listShiftCandidatesSchema.parse(req.query);
+    const result = await shiftsService.listShiftCandidates(query);
+    sendSuccess(res, result);
   } catch (err) {
     next(err);
   }

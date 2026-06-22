@@ -1,15 +1,20 @@
-import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { getToken, logout } from "./lib/api";
+import { useAuth } from "./providers/AuthProvider";
 import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 
 function Layout({ children }: { children: React.ReactNode }) {
+  const { logout } = useAuth();
+
   return (
     <div style={{ minHeight: "100vh" }}>
       <header style={{ background: "#14532d", color: "#fff", padding: "12px 24px", display: "flex", justifyContent: "space-between" }}>
         <strong>19er GmbH – Employee</strong>
-        <button onClick={logout} style={{ background: "transparent", border: "1px solid #fff", color: "#fff", padding: "4px 12px", borderRadius: 4 }}>
+        <button
+          type="button"
+          onClick={() => void logout()}
+          style={{ background: "transparent", border: "1px solid #fff", color: "#fff", padding: "4px 12px", borderRadius: 4 }}
+        >
           Logout
         </button>
       </header>
@@ -19,10 +24,18 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [authed, setAuthed] = useState(!!getToken());
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (!authed) {
-    return <LoginPage onSuccess={() => setAuthed(true)} />;
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        Loading…
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
   }
 
   return (

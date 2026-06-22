@@ -1,49 +1,170 @@
 import { prisma } from "@19er/db";
+import type { Prisma } from "@19er/db";
 import {
   BadRequestError,
   NotFoundError,
-  calculateSalary,
-  calculateWorkedHours,
+  computeEmployeePayrollTotals,
   parseDateRange,
   parsePagination,
   parseSortOrder,
+  type PayrollAssignmentInput,
 } from "@19er/shared";
-import type { Prisma } from "@19er/db";
 import type { z } from "zod";
-import type { payPayrollSchema, payrollRunSchema } from "./payroll.validators.js";
-import * as notificationsService from "../notifications/notifications.service.js";
+import type { payPayrollSchema, payrollPreviewSchema, payrollRunSchema } from "./payroll.validators.js";
 
 type PayrollRunInput = z.infer<typeof payrollRunSchema>;
+type PayrollPreviewInput = z.infer<typeof payrollPreviewSchema>;
 type PayPayrollInput = z.infer<typeof payPayrollSchema>;
 
-export async function runPayroll(input: PayrollRunInput) {
-  const { from, to } = parseDateRange(input.fromDate, input.toDate);
+export type PayrollPreviewLine = {
+  employeeId: string;
+  employee: { id: string; fullName: string; email: string; hourlyRate: number };
+  workedHours: number;
+  absenceHours: number;
+  scheduledHours: number;
+  hourlyRate: number;
+  salary: number;
+};
 
-  const attendances = await prisma.attendance.findMany({
+async function loadPayrollAssignments(from: Date, to: Date, employeeId?: string) {
+  const assignments = await prisma.shiftEmployee.findMany({
     where: {
-      checkIn: { not: null },
-      checkOut: { not: null },
+      ...(employeeId ? { employeeId } : {}),
+      employee: { role: "EMPLOYEE", isActive: true },
       shift: {
-        startTime: { gte: from, lte: to },
+        fromDate: { lte: to },
+        toDate: { gte: from },
       },
     },
     include: {
-      employee: true,
       shift: true,
+      employee: { select: { id: true, fullName: true, email: true, hourlyRate: true } },
     },
   });
 
-  const hoursByEmployee = new Map<string, number>();
+  const attendanceRecords =
+    assignments.length > 0
+      ? await prisma.attendance.findMany({
+          where: {
+            OR: assignments.map((assignment) => ({
+              shiftId: assignment.shiftId,
+              employeeId: assignment.employeeId,
+            })),
+          },
+        })
+      : [];
 
-  for (const record of attendances) {
-    if (!record.checkIn || !record.checkOut || record.status === "ABSENT") continue;
-    const hours = calculateWorkedHours(
-      record.checkIn,
-      record.checkOut,
-      record.shift.breakMinutes,
+  const attendanceByKey = new Map(
+    attendanceRecords.map((record) => [`${record.shiftId}:${record.employeeId}`, record]),
+  );
+
+  return { assignments, attendanceByKey };
+}
+
+function toAssignmentInput(
+  assignment: Awaited<ReturnType<typeof loadPayrollAssignments>>["assignments"][number],
+  attendanceByKey: Map<string, { status: string; checkIn: Date | null; checkOut: Date | null }>,
+): PayrollAssignmentInput {
+  const attendance = attendanceByKey.get(`${assignment.shiftId}:${assignment.employeeId}`) ?? null;
+  return {
+    employeeId: assignment.employeeId,
+    assignmentStatus: assignment.status,
+    shift: {
+      fromDate: assignment.shift.fromDate,
+      toDate: assignment.shift.toDate,
+      dailyStartTime: assignment.shift.dailyStartTime,
+      dailyEndTime: assignment.shift.dailyEndTime,
+      breakMinutes: assignment.shift.breakMinutes,
+    },
+    attendance: attendance
+      ? {
+          status: attendance.status,
+          checkIn: attendance.checkIn,
+          checkOut: attendance.checkOut,
+        }
+      : null,
+  };
+}
+
+async function buildPayrollPreview(
+  from: Date,
+  to: Date,
+  employeeId?: string,
+): Promise<PayrollPreviewLine[]> {
+  const { assignments, attendanceByKey } = await loadPayrollAssignments(from, to, employeeId);
+
+  const byEmployee = new Map<string, PayrollAssignmentInput[]>();
+  const employeeMeta = new Map<
+    string,
+    { id: string; fullName: string; email: string; hourlyRate: number }
+  >();
+
+  for (const assignment of assignments) {
+    const input = toAssignmentInput(assignment, attendanceByKey);
+    const list = byEmployee.get(assignment.employeeId) ?? [];
+    list.push(input);
+    byEmployee.set(assignment.employeeId, list);
+    employeeMeta.set(assignment.employeeId, assignment.employee);
+  }
+
+  if (employeeId && !employeeMeta.has(employeeId)) {
+    const employee = await prisma.user.findUnique({
+      where: { id: employeeId },
+      select: { id: true, fullName: true, email: true, hourlyRate: true, role: true },
+    });
+    if (!employee || employee.role !== "EMPLOYEE") {
+      throw new NotFoundError("Employee not found");
+    }
+    const { role: _, ...employeeData } = employee;
+    employeeMeta.set(employeeId, employeeData);
+    byEmployee.set(employeeId, []);
+  }
+
+  const lines: PayrollPreviewLine[] = [];
+
+  for (const [id, employee] of employeeMeta) {
+    const totals = computeEmployeePayrollTotals(
+      byEmployee.get(id) ?? [],
+      from,
+      to,
+      employee.hourlyRate,
     );
-    const current = hoursByEmployee.get(record.employeeId) ?? 0;
-    hoursByEmployee.set(record.employeeId, current + hours);
+
+    if (!employeeId && totals.workedHours === 0 && totals.absenceHours === 0) {
+      continue;
+    }
+
+    lines.push({
+      employeeId: id,
+      employee,
+      workedHours: totals.workedHours,
+      absenceHours: totals.absenceHours,
+      scheduledHours: totals.scheduledHours,
+      hourlyRate: employee.hourlyRate,
+      salary: totals.salary,
+    });
+  }
+
+  return lines.sort((a, b) => a.employee.fullName.localeCompare(b.employee.fullName));
+}
+
+export async function previewPayroll(input: PayrollPreviewInput) {
+  const { from, to } = parseDateRange(input.fromDate, input.toDate);
+  const lines = await buildPayrollPreview(from, to, input.employeeId);
+  return {
+    fromDate: from,
+    toDate: to,
+    employeeId: input.employeeId ?? null,
+    lines,
+  };
+}
+
+export async function runPayroll(input: PayrollRunInput) {
+  const { from, to } = parseDateRange(input.fromDate, input.toDate);
+  const lines = await buildPayrollPreview(from, to, input.employeeId);
+
+  if (lines.length === 0) {
+    throw new BadRequestError("No payroll records to create for this period");
   }
 
   const payrollRun = await prisma.payrollRun.create({
@@ -51,19 +172,16 @@ export async function runPayroll(input: PayrollRunInput) {
   });
 
   const payrolls = [];
-  for (const [employeeId, totalHours] of hoursByEmployee) {
-    const employee = await prisma.user.findUnique({ where: { id: employeeId } });
-    if (!employee) continue;
-
-    const salary = calculateSalary(totalHours, employee.hourlyRate);
+  for (const line of lines) {
     const payroll = await prisma.payroll.create({
       data: {
-        employeeId,
+        employeeId: line.employeeId,
         fromDate: from,
         toDate: to,
-        totalHours,
-        hourlyRate: employee.hourlyRate,
-        salary,
+        totalHours: line.workedHours,
+        absenceHours: line.absenceHours,
+        hourlyRate: line.hourlyRate,
+        salary: line.salary,
         payrollRunId: payrollRun.id,
       },
       include: {
@@ -71,13 +189,6 @@ export async function runPayroll(input: PayrollRunInput) {
       },
     });
     payrolls.push(payroll);
-
-    await notificationsService.createSalaryNotification(
-      employeeId,
-      salary,
-      from,
-      to,
-    );
   }
 
   return { payrollRun, payrolls };
@@ -109,6 +220,7 @@ export async function listPayrollRuns(query: {
       take: limit,
       orderBy,
       include: {
+        _count: { select: { payrolls: true } },
         payrolls: {
           include: {
             employee: { select: { id: true, fullName: true } },
@@ -128,13 +240,23 @@ export async function getPayrollRunById(id: string) {
     include: {
       payrolls: {
         include: {
-          employee: { select: { id: true, fullName: true, email: true } },
+          employee: { select: { id: true, fullName: true, email: true, phone: true } },
         },
+        orderBy: { employee: { fullName: "asc" } },
       },
     },
   });
   if (!run) throw new NotFoundError("Payroll run not found");
   return run;
+}
+
+export async function deletePayrollRun(id: string) {
+  await getPayrollRunById(id);
+  await prisma.$transaction([
+    prisma.payroll.deleteMany({ where: { payrollRunId: id } }),
+    prisma.payrollRun.delete({ where: { id } }),
+  ]);
+  return { deleted: true };
 }
 
 export async function listPayrolls(query: {
@@ -167,6 +289,7 @@ export async function listPayrolls(query: {
       employee: { employee: { fullName: "asc" } },
       fromDate: { fromDate: "asc" },
       totalHours: { totalHours: "asc" },
+      absenceHours: { absenceHours: "asc" },
       salary: { salary: "asc" },
       isPaid: { isPaid: "asc" },
     },

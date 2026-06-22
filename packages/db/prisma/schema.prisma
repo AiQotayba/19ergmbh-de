@@ -98,19 +98,24 @@ model RefreshToken {
 model Shift {
   id String @id @default(cuid())
 
-  title        String?
-  startTime    DateTime
-  endTime      DateTime
-  notes        String?
-  breakMinutes Int      @default(0)
+  title          String?
+  fromDate       DateTime @db.Date
+  toDate         DateTime @db.Date
+  dailyStartTime String
+  dailyEndTime   String
+  startTime      DateTime
+  endTime        DateTime
+  notes          String?
+  breakMinutes   Int      @default(0)
 
   status ShiftStatus @default(SCHEDULED)
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
 
-  employees   ShiftEmployee[]
-  attendances Attendance[]
+  employees     ShiftEmployee[]
+  attendances   Attendance[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
 }
@@ -154,8 +159,8 @@ model Attendance {
 
   notes String?
 
-  employee User  @relation(fields: [employeeId], references: [id])
-  shift    Shift @relation(fields: [shiftId], references: [id])
+  employee User  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, shiftId])
 }
@@ -174,6 +179,7 @@ model Payroll {
   toDate   DateTime
 
   totalHours Float
+  absenceHours Float @default(0)
   hourlyRate Float
   salary     Float
 
@@ -195,9 +201,11 @@ model PayrollRun {
   fromDate DateTime
   toDate   DateTime
 
-  createdAt DateTime @default(now())
+  lastSalaryNotifyAt DateTime?
 
-  payrolls Payroll[]
+  createdAt     DateTime       @default(now())
+  payrolls      Payroll[]
+  notifications Notification[]
 }
 
 //////////////////////////////
@@ -216,9 +224,19 @@ model Notification {
   title   String
   message String
 
+  scheduledAt DateTime?
+  attempts    Int       @default(0)
+  lastError   String?
+  shiftId     String?
+  payrollRunId String?
+
   sentAt DateTime?
 
-  employee User @relation(fields: [employeeId], references: [id])
+  employee   User        @relation(fields: [employeeId], references: [id])
+  shift      Shift?      @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  payrollRun PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
+
+  @@index([status, scheduledAt])
 }

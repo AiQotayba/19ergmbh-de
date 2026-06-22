@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import { bearer, createTestEmployee, futureShiftTimes, getApp, loginAsAdmin, loginAsEmployee } from "./helpers.js";
+import { bearer, createTestEmployee, futureShiftSchedule, getApp, loginAsAdmin, loginAsEmployee } from "./helpers.js";
 
 describe("Me API", () => {
   it("GET /me returns employee profile", async () => {
@@ -11,6 +11,22 @@ describe("Me API", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(user.id);
     expect(res.body.data.email).toBe(user.email);
+  });
+
+  it("PUT /me updates own profile", async () => {
+    const admin = await loginAsAdmin();
+
+    const res = await request(getApp())
+      .put("/me")
+      .set(bearer(admin.tokens.accessToken))
+      .send({
+        fullName: "Admin Updated",
+        email: admin.user.email,
+        phone: admin.user.phone ?? "+4915112345678",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.fullName).toBe("Admin Updated");
   });
 
   it("GET /me/shifts returns assigned shifts", async () => {
@@ -66,7 +82,7 @@ describe("Attendance API", () => {
   it("employee can check in and out of an assigned shift", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const times = futureShiftTimes(24);
+    const times = futureShiftSchedule(0);
 
     const shift = await request(getApp())
       .post("/shifts")

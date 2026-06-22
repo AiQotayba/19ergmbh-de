@@ -67,6 +67,12 @@ export interface CreateUserRequest {
   isActive?: boolean;
 }
 
+export interface UpdateProfileRequest {
+  fullName: string;
+  email: string;
+  phone: string;
+}
+
 export interface UpdateUserRequest {
   fullName?: string;
   email?: string;

@@ -8,7 +8,9 @@
     "start": "node dist/server.js",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "email:test": "tsx scripts/test-email.ts",
+    "whatsapp:test": "tsx scripts/test-whatsapp.ts"
   },
   "dependencies": {
     "@19er/auth": "workspace:*",
@@ -18,12 +20,15 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.11",
     "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
+    "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^6.0.3",
     "supertest": "^7.1.1",
     "tsx": "^4.19.4",

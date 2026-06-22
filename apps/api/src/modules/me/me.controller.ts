@@ -3,6 +3,7 @@ import type { AuthenticatedRequest } from "@19er/auth";
 import { sendSuccess } from "../../shared/response.js";
 import * as attendanceService from "../attendance/attendance.service.js";
 import * as meService from "./me.service.js";
+import { updateProfileSchema } from "./me.validators.js";
 import { checkInSchema, checkOutSchema } from "../attendance/attendance.validators.js";
 
 export async function getProfileHandler(
@@ -12,6 +13,20 @@ export async function getProfileHandler(
 ): Promise<void> {
   try {
     const profile = await meService.getProfile(req.user!.sub);
+    sendSuccess(res, profile);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateProfileHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const input = updateProfileSchema.parse(req.body);
+    const profile = await meService.updateProfile(req.user!.sub, input);
     sendSuccess(res, profile);
   } catch (err) {
     next(err);

@@ -43,7 +43,17 @@ export async function checkIn(
 
   const isLate = now > shift.startTime;
 
+  async function confirmAssignment() {
+    await prisma.shiftEmployee.update({
+      where: {
+        shiftId_employeeId: { shiftId: input.shiftId, employeeId },
+      },
+      data: { status: "CONFIRMED" },
+    });
+  }
+
   if (existing) {
+    await confirmAssignment();
     return prisma.attendance.update({
       where: { id: existing.id },
       data: {
@@ -57,6 +67,8 @@ export async function checkIn(
       },
     });
   }
+
+  await confirmAssignment();
 
   return prisma.attendance.create({
     data: {
@@ -112,6 +124,13 @@ export async function markAbsent(input: MarkAbsentInput) {
 
   const existing = await prisma.attendance.findUnique({
     where: { employeeId_shiftId: { employeeId: input.employeeId, shiftId: input.shiftId } },
+  });
+
+  await prisma.shiftEmployee.update({
+    where: {
+      shiftId_employeeId: { shiftId: input.shiftId, employeeId: input.employeeId },
+    },
+    data: { status: "ABSENT" },
   });
 
   if (existing) {
