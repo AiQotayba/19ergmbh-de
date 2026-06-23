@@ -46,7 +46,12 @@ export function LoginPage() {
       <div className="relative hidden flex-1 flex-col justify-between bg-primary p-10 text-white lg:flex">
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-[#0f1d35]" />
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold leading-tight">
+          <img
+            src="/logo.png"
+            alt="19er GmbH"
+            className="h-28 w-32 rounded-2xl bg-accent-soft object-contain p-4"
+          />
+          <h1 className="mt-10 text-3xl font-bold leading-tight">
             {t("login.heroTitle")}
             <br />
             <span className="text-accent">{t("login.heroSubtitle")}</span>
@@ -62,6 +67,11 @@ export function LoginPage() {
         </div>
         <Card className="w-full max-w-md border-0 shadow-[var(--shadow-float)]">
           <CardHeader className="text-center">
+            <img
+              src="/logo.png"
+              alt="19er GmbH"
+              className="mx-auto mb-4 h-16 w-16 object-contain lg:hidden"
+            />
             <CardTitle className="text-2xl">{t("login.title")}</CardTitle>
             <CardDescription>{t("login.subtitle")}</CardDescription>
           </CardHeader>

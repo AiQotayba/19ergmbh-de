@@ -104,5 +104,23 @@
     "confirmPassword": "تأكيد كلمة المرور",
     "passwordMismatch": "كلمتا المرور غير متطابقتين",
     "changePassword": "تغيير كلمة المرور"
+  },
+  "pwa": {
+    "title": "تثبيت التطبيق",
+    "description": "أضف تطبيق 19er Employee إلى الشاشة الرئيسية للوصول السريع.",
+    "install": "تثبيت",
+    "installing": "جاري التثبيت…",
+    "installed": "التطبيق مثبّت على هذا الجهاز",
+    "dialogTitle": "تثبيت 19er Employee",
+    "dialogDescription": "افتح جدولك وراتبك كتطبيق مستقل.",
+    "nativeHint": "وصول أسرع دون فتح المتصفح في كل مرة.",
+    "iosTitle": "على iPhone / iPad",
+    "iosStep1": "اضغط زر المشاركة في شريط المتصفح",
+    "iosStep2": "اختر «إضافة إلى الشاشة الرئيسية»",
+    "iosStep3": "اضغط «إضافة»",
+    "cancel": "إلغاء",
+    "gotIt": "فهمت",
+    "updateAvailable": "يتوفر إصدار جديد",
+    "reload": "إعادة التحميل"
   }
 }

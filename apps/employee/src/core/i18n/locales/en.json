@@ -104,5 +104,23 @@
     "confirmPassword": "Confirm password",
     "passwordMismatch": "Passwords do not match",
     "changePassword": "Change password"
+  },
+  "pwa": {
+    "title": "Install app",
+    "description": "Add 19er Employee to your home screen for quick access.",
+    "install": "Install",
+    "installing": "Installing…",
+    "installed": "App installed on this device",
+    "dialogTitle": "Install 19er Employee",
+    "dialogDescription": "Open your schedule and payroll like a native app.",
+    "nativeHint": "Install for faster access without opening the browser each time.",
+    "iosTitle": "On iPhone / iPad",
+    "iosStep1": "Tap Share in the browser toolbar",
+    "iosStep2": "Choose “Add to Home Screen”",
+    "iosStep3": "Tap “Add”",
+    "cancel": "Cancel",
+    "gotIt": "Got it",
+    "updateAvailable": "A new version is available",
+    "reload": "Reload"
   }
 }

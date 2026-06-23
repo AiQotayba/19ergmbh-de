@@ -21,7 +21,10 @@ export function AppShell() {
       <header className="sticky top-0 z-20 border-b border-border/80 bg-surface/95 backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-foreground">19er GmbH</p>
+            <div className="flex items-center gap-2">
+              <img src="/icon-192.png" alt="" className="h-8 w-8 shrink-0 rounded-lg object-contain" />
+              <p className="truncate text-sm font-bold text-foreground">19er GmbH</p>
+            </div>
             <p className="truncate text-xs text-muted">{user?.fullName}</p>
           </div>
           <div className="flex items-center gap-2">

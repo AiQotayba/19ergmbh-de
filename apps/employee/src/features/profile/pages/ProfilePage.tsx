@@ -1,3 +1,4 @@
+import { InstallAppCard } from "@/core/pwa/InstallAppCard";
 import { Button } from "@/core/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/core/ui/card";
 import { Input } from "@/core/ui/input";
@@ -123,6 +124,8 @@ export function ProfilePage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">{t("profile.title")}</h1>
+
+      <InstallAppCard />
 
       {profile?.hourlyRate != null && (
         <Card>

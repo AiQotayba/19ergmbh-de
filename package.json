@@ -17,7 +17,12 @@
     "db:test": "pnpm --filter @19er/db db:test",
     "test": "turbo test --filter=@19er/api",
     "test:api": "pnpm --filter @19er/api test",
-    "deploy:api": "bash deploy/deploy-api.sh"
+    "deploy:api": "bash deploy/deploy-api.sh",
+    "deploy:admin": "vercel link --yes --project 19er-admin && vercel deploy --prod --yes --archive=tgz --local-config apps/admin/vercel.json",
+    "deploy:employee": "vercel link --yes --project 19er-employee && vercel deploy --prod --yes --archive=tgz --local-config apps/employee/vercel.json",
+    "deploy:api:vercel": "vercel link --yes --project 19er-api && vercel deploy --prod --yes --archive=tgz --local-config apps/api/vercel.json",
+    "deploy:apps": "pnpm deploy:employee && pnpm deploy:admin",
+    "deploy:vercel": "pnpm deploy:apps"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

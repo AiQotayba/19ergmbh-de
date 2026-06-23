@@ -104,5 +104,23 @@
     "confirmPassword": "Passwort bestätigen",
     "passwordMismatch": "Passwörter stimmen nicht überein",
     "changePassword": "Passwort ändern"
+  },
+  "pwa": {
+    "title": "App installieren",
+    "description": "19er Employee zum Startbildschirm hinzufügen für schnellen Zugriff.",
+    "install": "Installieren",
+    "installing": "Wird installiert…",
+    "installed": "App auf diesem Gerät installiert",
+    "dialogTitle": "19er Employee installieren",
+    "dialogDescription": "Dienstplan und Gehalt wie eine native App öffnen.",
+    "nativeHint": "Schneller Zugriff ohne den Browser jedes Mal zu öffnen.",
+    "iosTitle": "Auf iPhone / iPad",
+    "iosStep1": "Teilen-Symbol in der Browserleiste tippen",
+    "iosStep2": "„Zum Home-Bildschirm“ wählen",
+    "iosStep3": "„Hinzufügen“ tippen",
+    "cancel": "Abbrechen",
+    "gotIt": "Verstanden",
+    "updateAvailable": "Eine neue Version ist verfügbar",
+    "reload": "Neu laden"
   }
 }

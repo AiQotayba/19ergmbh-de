@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=@19er/admin",
-  "outputDirectory": "dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm turbo build --filter=@19er/admin",
+  "outputDirectory": "apps/admin/dist",
   "framework": "vite",
-  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
