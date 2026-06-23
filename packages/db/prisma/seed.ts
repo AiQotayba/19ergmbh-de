@@ -2,9 +2,10 @@ import { config } from "dotenv";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
-
+  
 const dbRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 config({ path: resolve(dbRoot, "../../.env"), override: true });
+config({ path: resolve(dbRoot, "../../.env.local"), override: true });
 config({ path: resolve(dbRoot, ".env"), override: true });
 
 /** 9 employees + 1 admin = 10 users total */

@@ -7,16 +7,21 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "db:generate": "dotenv -e ../../.env -o -- prisma generate",
-    "db:push": "dotenv -e ../../.env -o -- prisma db push --skip-generate",
-    "db:migrate": "dotenv -e ../../.env -o -- prisma migrate dev",
-    "db:seed": "dotenv -e ../../.env -o -- tsx prisma/seed.ts",
-    "db:studio": "dotenv -e ../../.env -o -- prisma studio"
+    "db:generate": "node scripts/with-root-env.mjs generate",
+    "db:push": "node scripts/with-root-env.mjs db push --skip-generate",
+    "db:migrate": "node scripts/with-root-env.mjs migrate dev",
+    "db:seed": "node scripts/run-seed.mjs",
+    "db:studio": "node scripts/with-root-env.mjs studio",
+    "db:test": "node scripts/with-root-env.mjs generate && tsx scripts/test-db.ts"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^6.9.0",
+    "@prisma/adapter-pg": "^6.9.0",
     "@prisma/client": "^6.9.0",
     "bcryptjs": "^3.0.2",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "mariadb": "^3.4.5",
+    "pg": "^8.16.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -24,7 +29,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.15.30",
-    "dotenv-cli": "^8.0.0",
+    "@types/pg": "^8.11.10",
     "prisma": "^6.9.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"

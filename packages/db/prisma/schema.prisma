@@ -1,3 +1,5 @@
+// Edit this file. Prisma CLI materializes it to packages/db/.prisma/schema on generate/push/migrate.
+
 generator client {
   provider = "prisma-client-js"
 }

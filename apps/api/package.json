@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "email:test": "tsx scripts/test-email.ts",
-    "whatsapp:test": "tsx scripts/test-whatsapp.ts"
+    "whatsapp:test": "tsx scripts/test-whatsapp.ts",
+    "db:test": "pnpm --filter @19er/db db:test"
   },
   "dependencies": {
     "@19er/auth": "workspace:*",

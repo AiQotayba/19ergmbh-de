@@ -2,6 +2,7 @@ import { prisma } from "@19er/db";
 import type { Prisma } from "@19er/db";
 import { BadRequestError, ForbiddenError, NotFoundError, buildDateRangeWhere, parsePagination, parseSortOrder } from "@19er/shared";
 import { parseListDateRange } from "../../shared/list-query.js";
+import { icontains } from "../../utils/prisma-search.js";
 import type { z } from "zod";
 import type { checkInSchema, checkOutSchema, markAbsentSchema, markHolidaySchema } from "./attendance.validators.js";
 
@@ -234,10 +235,10 @@ export async function listAttendance(query: {
 
   if (normalized.search) {
     where.OR = [
-      { notes: { contains: normalized.search, mode: "insensitive" } },
-      { employee: { fullName: { contains: normalized.search, mode: "insensitive" } } },
-      { employee: { email: { contains: normalized.search, mode: "insensitive" } } },
-      { shift: { title: { contains: normalized.search, mode: "insensitive" } } },
+      { notes: icontains(normalized.search) },
+      { employee: { fullName: icontains(normalized.search) } },
+      { employee: { email: icontains(normalized.search) } },
+      { shift: { title: icontains(normalized.search) } },
     ];
   }
   if (normalized.employeeId) where.employeeId = normalized.employeeId;

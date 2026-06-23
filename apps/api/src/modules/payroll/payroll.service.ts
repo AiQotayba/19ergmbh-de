@@ -9,6 +9,7 @@ import {
   parseSortOrder,
   type PayrollAssignmentInput,
 } from "@19er/shared";
+import { icontains } from "../../utils/prisma-search.js";
 import type { z } from "zod";
 import type { payPayrollSchema, payrollPreviewSchema, payrollRunSchema } from "./payroll.validators.js";
 
@@ -275,8 +276,8 @@ export async function listPayrolls(query: {
 
   if (query.search) {
     where.OR = [
-      { employee: { fullName: { contains: query.search, mode: "insensitive" } } },
-      { employee: { email: { contains: query.search, mode: "insensitive" } } },
+      { employee: { fullName: icontains(query.search) } },
+      { employee: { email: icontains(query.search) } },
     ];
   }
   if (query.employeeId) where.employeeId = query.employeeId;

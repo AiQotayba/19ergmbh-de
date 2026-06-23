@@ -7,10 +7,11 @@ const apiRoot = resolve(__dirname, "..");
 const monorepoRoot = resolve(apiRoot, "../..");
 
 config({ path: resolve(monorepoRoot, ".env"), override: true });
+config({ path: resolve(monorepoRoot, ".env.local"), override: true });
 config({ path: resolve(apiRoot, ".env"), override: true });
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required. Copy .env.example to .env and start PostgreSQL.");
+  throw new Error("DATABASE_URL is required. Copy .env.example to .env (or .env.local) and start the database.");
 }
 
 if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {

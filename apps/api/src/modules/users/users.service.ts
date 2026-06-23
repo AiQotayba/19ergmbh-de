@@ -3,6 +3,7 @@ import type { Prisma } from "@19er/db";
 import { hashPassword } from "@19er/auth";
 import { ConflictError, NotFoundError, parsePagination } from "@19er/shared";
 import { parseSortOrder } from "../../shared/list-query.js";
+import { icontains } from "../../utils/prisma-search.js";
 import type { z } from "zod";
 import type { createUserSchema, updateUserSchema } from "./users.validators.js";
 
@@ -72,9 +73,9 @@ export async function listUsers(query: {
 
   if (normalized.search) {
     where.OR = [
-      { fullName: { contains: normalized.search, mode: "insensitive" } },
-      { email: { contains: normalized.search, mode: "insensitive" } },
-      { phone: { contains: normalized.search, mode: "insensitive" } },
+      { fullName: icontains(normalized.search) },
+      { email: icontains(normalized.search) },
+      { phone: icontains(normalized.search) },
     ];
   }
   if (normalized.role) where.role = normalized.role;

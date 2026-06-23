@@ -5,6 +5,7 @@ const apiRoot = process.cwd();
 const monorepoRoot = resolve(apiRoot, "../..");
 
 config({ path: resolve(monorepoRoot, ".env"), override: true });
+config({ path: resolve(monorepoRoot, ".env.local"), override: true });
 config({ path: resolve(apiRoot, ".env"), override: true });
 
 const nodeEnv = process.env.NODE_ENV ?? "development";

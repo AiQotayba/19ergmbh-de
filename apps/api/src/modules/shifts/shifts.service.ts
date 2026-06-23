@@ -2,6 +2,7 @@ import { prisma } from "@19er/db";
 import type { Prisma } from "@19er/db";
 import { BadRequestError, ConflictError, NotFoundError, deriveRosterStatus, parsePagination, parseSortOrder } from "@19er/shared";
 import { parseListDateRange } from "../../shared/list-query.js";
+import { icontains } from "../../utils/prisma-search.js";
 import type { z } from "zod";
 import type { assignShiftSchema, createShiftSchema, createShiftsBulkSchema, updateShiftSchema } from "./shifts.validators.js";
 import {
@@ -94,12 +95,12 @@ export async function listShifts(query: {
 
   if (normalized.search) {
     where.OR = [
-      { title: { contains: normalized.search, mode: "insensitive" } },
-      { notes: { contains: normalized.search, mode: "insensitive" } },
+      { title: icontains(normalized.search) },
+      { notes: icontains(normalized.search) },
       {
         employees: {
           some: {
-            employee: { fullName: { contains: normalized.search, mode: "insensitive" } },
+            employee: { fullName: icontains(normalized.search) },
           },
         },
       },
@@ -318,8 +319,8 @@ export async function listShiftCandidates(query: {
 
   if (query.search) {
     where.OR = [
-      { fullName: { contains: query.search, mode: "insensitive" } },
-      { email: { contains: query.search, mode: "insensitive" } },
+      { fullName: icontains(query.search) },
+      { email: icontains(query.search) },
     ];
   }
 
@@ -536,9 +537,9 @@ export async function listShiftEmployees(query: {
 
   if (normalized.search) {
     where.OR = [
-      { employee: { fullName: { contains: normalized.search, mode: "insensitive" } } },
-      { employee: { email: { contains: normalized.search, mode: "insensitive" } } },
-      { shift: { title: { contains: normalized.search, mode: "insensitive" } } },
+      { employee: { fullName: icontains(normalized.search) } },
+      { employee: { email: icontains(normalized.search) } },
+      { shift: { title: icontains(normalized.search) } },
     ];
   }
 
