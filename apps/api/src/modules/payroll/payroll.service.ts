@@ -75,6 +75,7 @@ function toAssignmentInput(
       dailyStartTime: assignment.shift.dailyStartTime,
       dailyEndTime: assignment.shift.dailyEndTime,
       breakMinutes: assignment.shift.breakMinutes,
+      endTime: assignment.shift.endTime,
     },
     attendance: attendance
       ? {

@@ -13,3 +13,5 @@ export const markAbsentSchema = z.object({
   employeeId: z.string().min(1),
   notes: z.string().optional(),
 });
+
+export const markHolidaySchema = markAbsentSchema;

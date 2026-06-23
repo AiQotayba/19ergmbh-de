@@ -56,6 +56,23 @@ function uniqueShiftStart(hoursFromNow: number): number {
   return Date.now() + (hoursFromNow + jitterHours) * 3_600_000;
 }
 
+/** Shift schedule in the past (ended at least 1 hour ago). */
+export function pastShiftSchedule(daySpan = 0) {
+  const endMs = Date.now() - 2 * 3_600_000;
+  const to = new Date(endMs);
+  const from = new Date(to);
+  from.setUTCDate(from.getUTCDate() - daySpan);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const fromDate = `${from.getUTCFullYear()}-${pad(from.getUTCMonth() + 1)}-${pad(from.getUTCDate())}`;
+  const toDate = `${to.getUTCFullYear()}-${pad(to.getUTCMonth() + 1)}-${pad(to.getUTCDate())}`;
+  return {
+    fromDate,
+    toDate,
+    dailyStartTime: "09:00",
+    dailyEndTime: "17:00",
+  };
+}
+
 /** Unique shift schedule to avoid overlap with seed data and prior test runs. */
 export function futureShiftSchedule(daySpan = 0) {
   const startMs = uniqueShiftStart(24);
@@ -123,8 +140,8 @@ export async function createShiftAndAssign(
   employeeId: string,
   title = "User Story Shift",
   breakMinutes = 0,
+  schedule = futureShiftSchedule(0),
 ) {
-  const schedule = futureShiftSchedule(0);
   const shiftRes = await request(getApp())
     .post("/shifts")
     .set(bearer(adminToken))

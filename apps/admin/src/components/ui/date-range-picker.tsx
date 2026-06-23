@@ -3,10 +3,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { CalendarIcon, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
+
+function isIncompleteRange(range?: DateRange): boolean {
+  return Boolean(range?.from && !range?.to);
+}
 
 function toDateString(date: Date): string {
   return format(date, "yyyy-MM-dd");
@@ -37,8 +41,15 @@ export function DateRangePicker({ from, to, onChange, className, placeholder }: 
   const { t, dir } = useI18n();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DateRange | undefined>();
+  const allowDismissRef = useRef(false);
+  const draftRef = useRef<DateRange | undefined>(undefined);
 
   const committed = useMemo(() => rangeFromStrings(from, to), [from, to]);
+
+  function setDraftRange(range: DateRange | undefined) {
+    draftRef.current = range;
+    setDraft(range);
+  }
 
   const label = useMemo(() => {
     const fromDate = parseDateString(from);
@@ -49,44 +60,67 @@ export function DateRangePicker({ from, to, onChange, className, placeholder }: 
     return placeholder ?? t("common.dateRange");
   }, [from, to, placeholder, t]);
 
+  function closePopover() {
+    allowDismissRef.current = false;
+    setOpen(false);
+    setDraftRange(undefined);
+  }
+
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
-      setDraft(committed);
+      allowDismissRef.current = false;
+      setDraftRange(committed);
       setOpen(true);
       return;
     }
-    setOpen(false);
-    setDraft(undefined);
+
+    if (isIncompleteRange(draftRef.current) && !allowDismissRef.current) {
+      return;
+    }
+
+    closePopover();
   }
 
   function handleSelect(range: DateRange | undefined) {
     if (!range?.from) {
-      setDraft(undefined);
-      onChange("", "");
+      setDraftRange(undefined);
+      return;
+    }
+
+    const draftFrom = draftRef.current?.from;
+
+    // v10: first click sets from and to to the same day — wait for a second click
+    if (
+      range.to &&
+      isSameDay(range.from, range.to) &&
+      (!draftFrom || !isSameDay(draftFrom, range.from))
+    ) {
+      setDraftRange({ from: range.from, to: undefined });
       return;
     }
 
     if (!range.to) {
-      setDraft({ from: range.from, to: undefined });
+      setDraftRange({ from: range.from, to: undefined });
       return;
     }
 
     const nextFrom = toDateString(range.from);
     const nextTo = toDateString(range.to);
     onChange(nextFrom, nextTo);
-    setDraft(range);
+    allowDismissRef.current = true;
+    setDraftRange(range);
     setOpen(false);
   }
 
   function clearRange(event: React.MouseEvent) {
     event.stopPropagation();
     onChange("", "");
-    setDraft(undefined);
-    setOpen(false);
+    allowDismissRef.current = true;
+    closePopover();
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -119,7 +153,26 @@ export function DateRangePicker({ from, to, onChange, className, placeholder }: 
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start" dir={dir}>
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        dir={dir}
+        onInteractOutside={(event) => {
+          const originalType = event.detail.originalEvent.type;
+          if (originalType === "focusin" && isIncompleteRange(draftRef.current)) {
+            event.preventDefault();
+            return;
+          }
+          allowDismissRef.current = true;
+        }}
+        onEscapeKeyDown={(event) => {
+          if (isIncompleteRange(draftRef.current)) {
+            event.preventDefault();
+            return;
+          }
+          allowDismissRef.current = true;
+        }}
+      >
         <Calendar
           mode="range"
           selected={draft}

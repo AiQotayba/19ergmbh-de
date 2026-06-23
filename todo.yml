@@ -10,14 +10,4 @@
 - buy whatsapp
 - testing all filters and sorting
 - user stories:
-- video stories:
-    - shift management
-    - Payroll management
-    - notifications:
-      - زر اعادة ارسال الرسائل للموضفين
-    - Attendance management:
-      - هذه هو لازم فيه نعرف اي موضف مداوم مشان نحطه غياب في الشيفت تبعه
-      - الجدول تبعها هو ShiftEmployee
-      - UX :
-        - يكون فيه كل المداومين واي موضف بده يغيب نبحث عليه ونغير حالته لغياب
-        - في فلاتر وبحث بيساعد
+- video stories: 

@@ -1,49 +1,33 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./providers/AuthProvider";
-import { LoginPage } from "./pages/LoginPage";
-import { HomePage } from "./pages/HomePage";
-
-function Layout({ children }: { children: React.ReactNode }) {
-  const { logout } = useAuth();
-
-  return (
-    <div style={{ minHeight: "100vh" }}>
-      <header style={{ background: "#14532d", color: "#fff", padding: "12px 24px", display: "flex", justifyContent: "space-between" }}>
-        <strong>19er GmbH – Employee</strong>
-        <button
-          type="button"
-          onClick={() => void logout()}
-          style={{ background: "transparent", border: "1px solid #fff", color: "#fff", padding: "4px 12px", borderRadius: 4 }}
-        >
-          Logout
-        </button>
-      </header>
-      <main style={{ padding: 24 }}>{children}</main>
-    </div>
-  );
-}
+import { AppShell } from "@/core/layout/AppShell";
+import { ProtectedRoute } from "@/core/layout/ProtectedRoute";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { HomePage } from "@/features/home/pages/HomePage";
+import { PayrollDetailPage } from "@/features/payroll/pages/PayrollDetailPage";
+import { PayrollPage } from "@/features/payroll/pages/PayrollPage";
+import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { SchedulePage } from "@/features/schedule/pages/SchedulePage";
+import { ShiftDetailPage } from "@/features/schedule/pages/ShiftDetailPage";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 export default function App() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        Loading…
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<HomePage />} />
+        <Route path="schedule" element={<SchedulePage />} />
+        <Route path="schedule/:assignmentId" element={<ShiftDetailPage />} />
+        <Route path="payroll" element={<PayrollPage />} />
+        <Route path="payroll/:id" element={<PayrollDetailPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

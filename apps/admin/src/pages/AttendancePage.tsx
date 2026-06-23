@@ -17,7 +17,7 @@ import { DataTable, type TableColumn } from "@/components/tables/DataTable";
 import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
 import { useI18n } from "@/i18n";
 import { api, normalizePaginated } from "@/lib/api-client";
-import type { AttendanceStatus, PaginatedResponse } from "@19er/types";
+import type { PaginatedResponse, RosterStatus } from "@19er/types";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -27,12 +27,12 @@ interface RosterRow {
   shiftId: string;
   employeeId: string;
   status: string;
-  attendanceStatus: AttendanceStatus | "SCHEDULED";
+  attendanceStatus: RosterStatus;
   attendance: {
     id: string;
     checkIn: string | null;
     checkOut: string | null;
-    status: AttendanceStatus;
+    status: string;
     notes: string | null;
   } | null;
   employee: { id: string; fullName: string; email: string };
@@ -48,20 +48,29 @@ interface RosterRow {
   };
 }
 
-const statusVariant: Record<string, "success" | "destructive" | "warning" | "outline"> = {
+const statusVariant: Record<string, "success" | "destructive" | "warning" | "outline" | "secondary"> = {
   PRESENT: "success",
+  ON_DUTY: "success",
   ABSENT: "destructive",
   LATE: "warning",
   SCHEDULED: "outline",
+  HOLIDAY: "outline",
 };
 
-const ATTENDANCE_STATUS_FILTERS = new Set(["PRESENT", "ABSENT", "LATE", "SCHEDULED"]);
+const ATTENDANCE_STATUS_FILTERS = new Set([
+  "ON_DUTY",
+  "SCHEDULED",
+  "PRESENT",
+  "ABSENT",
+  "LATE",
+  "HOLIDAY",
+]);
 
 export function AttendancePage() {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
   const tableFilters = useTableUrlFilters();
-  const [markingKey, setMarkingKey] = useState<string | null>(null);
+  const [actionKey, setActionKey] = useState<string | null>(null);
 
   const rawStatusFilter = tableFilters.get("attendanceStatus");
   const statusFilter = ATTENDANCE_STATUS_FILTERS.has(rawStatusFilter) ? rawStatusFilter : "";
@@ -80,21 +89,34 @@ export function AttendancePage() {
     },
   });
 
-  async function markAbsent(row: RosterRow) {
-    const key = `${row.shiftId}:${row.employeeId}`;
-    setMarkingKey(key);
+  async function runAction(
+    key: string,
+    endpoint: "/attendance/absent" | "/attendance/holiday",
+    row: RosterRow,
+    successMessage: string,
+  ) {
+    setActionKey(key);
     try {
       const res = await api.post(
-        "/attendance/absent",
+        endpoint,
         { shiftId: row.shiftId, employeeId: row.employeeId },
-        { showSuccessToast: true, successMessage: t("attendance.markedAbsent") },
+        { showSuccessToast: true, successMessage },
       );
       if (res.isError) throw new Error(res.message);
       queryClient.invalidateQueries({ queryKey: ["attendance-roster"] });
     } finally {
-      setMarkingKey(null);
+      setActionKey(null);
     }
   }
+
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("attendance.scheduled"),
+    ON_DUTY: t("attendance.onDuty"),
+    PRESENT: t("attendance.present"),
+    ABSENT: t("attendance.absent"),
+    LATE: t("attendance.late"),
+    HOLIDAY: t("attendance.holiday"),
+  };
 
   const columns: TableColumn<RosterRow>[] = [
     {
@@ -131,35 +153,38 @@ export function AttendancePage() {
     {
       key: "attendanceStatus",
       label: t("attendance.status"),
-      render: (_, row) => {
-        const labels: Record<string, string> = {
-          SCHEDULED: t("attendance.scheduled"),
-          PRESENT: t("attendance.present"),
-          ABSENT: t("attendance.absent"),
-          LATE: t("attendance.late"),
-        };
-        const label = labels[row.attendanceStatus] ?? row.attendanceStatus;
-        return (
-          <Badge variant={statusVariant[row.attendanceStatus] ?? "outline"}>{label}</Badge>
-        );
-      },
+      render: (_, row) => (
+        <Badge variant={statusVariant[row.attendanceStatus] ?? "outline"}>
+          {statusLabels[row.attendanceStatus] ?? row.attendanceStatus}
+        </Badge>
+      ),
     },
     {
       key: "actions",
       label: t("attendance.actions"),
       render: (_, row) => {
         const key = `${row.shiftId}:${row.employeeId}`;
-        const isAbsent = row.attendanceStatus === "ABSENT";
-        const busy = markingKey === key;
+        const busy = actionKey === key;
+        const isFinal = row.attendanceStatus === "ABSENT" || row.attendanceStatus === "HOLIDAY";
         return (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isAbsent || busy}
-            onClick={() => void markAbsent(row)}
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("attendance.markAbsent")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isFinal || busy}
+              onClick={() => void runAction(key, "/attendance/absent", row, t("attendance.markedAbsent"))}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("attendance.markAbsent")}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={isFinal || busy}
+              onClick={() => void runAction(key, "/attendance/holiday", row, t("attendance.markedHoliday"))}
+            >
+              {t("attendance.markHoliday")}
+            </Button>
+          </div>
         );
       },
     },
@@ -199,10 +224,12 @@ export function AttendancePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("attendance.allStatus")}</SelectItem>
+                <SelectItem value="ON_DUTY">{t("attendance.onDuty")}</SelectItem>
                 <SelectItem value="SCHEDULED">{t("attendance.scheduled")}</SelectItem>
                 <SelectItem value="PRESENT">{t("attendance.present")}</SelectItem>
                 <SelectItem value="ABSENT">{t("attendance.absent")}</SelectItem>
                 <SelectItem value="LATE">{t("attendance.late")}</SelectItem>
+                <SelectItem value="HOLIDAY">{t("attendance.holiday")}</SelectItem>
               </SelectContent>
             </Select>
             <DateRangePicker

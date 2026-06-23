@@ -38,6 +38,10 @@ const statusVariant: Record<string, "success" | "destructive" | "warning" | "out
   PENDING: "warning",
 };
 
+function canResendNotification(status: NotificationStatus) {
+  return status === "FAILED" || status === "PENDING";
+}
+
 export function NotificationsPage() {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
@@ -157,7 +161,7 @@ export function NotificationsPage() {
         key: "resend",
         label: t("common.actions"),
         render: (_, row) =>
-          row.status === "FAILED" ? (
+          canResendNotification(row.status) ? (
             <Button
               size="sm"
               variant="outline"

@@ -33,6 +33,7 @@ enum ShiftEmployeeStatus {
   SCHEDULED
   CONFIRMED
   ABSENT
+  HOLIDAY
   COMPLETED
 }
 

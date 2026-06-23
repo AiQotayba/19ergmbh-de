@@ -1,6 +1,6 @@
 import { prisma } from "@19er/db";
 import type { Prisma } from "@19er/db";
-import { BadRequestError, ConflictError, NotFoundError, parsePagination, parseSortOrder } from "@19er/shared";
+import { BadRequestError, ConflictError, NotFoundError, deriveRosterStatus, parsePagination, parseSortOrder } from "@19er/shared";
 import { parseListDateRange } from "../../shared/list-query.js";
 import type { z } from "zod";
 import type { assignShiftSchema, createShiftSchema, createShiftsBulkSchema, updateShiftSchema } from "./shifts.validators.js";
@@ -429,12 +429,14 @@ function buildShiftOverlapWhere(fromDate?: string, toDate?: string): Prisma.Shif
 }
 
 function deriveAttendanceStatus(
-  assignment: { status: string },
-  attendance: { status: string } | null | undefined,
+  assignment: { status: string; shift: { endTime: Date } },
+  attendance: { status: string; checkIn: Date | null } | null | undefined,
 ): string {
-  if (attendance?.status) return attendance.status;
-  if (assignment.status === "ABSENT") return "ABSENT";
-  return "SCHEDULED";
+  return deriveRosterStatus({
+    assignmentStatus: assignment.status,
+    attendance,
+    shift: assignment.shift,
+  });
 }
 
 async function buildAttendanceStatusFilter(
@@ -442,6 +444,12 @@ async function buildAttendanceStatusFilter(
   shiftWhere: Prisma.ShiftWhereInput,
 ): Promise<Prisma.ShiftEmployeeWhereInput | undefined> {
   if (!attendanceStatus) return undefined;
+
+  const now = new Date();
+
+  if (attendanceStatus === "HOLIDAY") {
+    return { status: "HOLIDAY" };
+  }
 
   if (attendanceStatus === "ABSENT") {
     const pairs = await prisma.attendance.findMany({
@@ -469,25 +477,34 @@ async function buildAttendanceStatusFilter(
     };
   }
 
-  if (attendanceStatus === "SCHEDULED") {
-    const [attendancePairs, absentAssignments] = await Promise.all([
-      prisma.attendance.findMany({
-        where: { shift: shiftWhere },
-        select: { shiftId: true, employeeId: true },
-      }),
-      prisma.shiftEmployee.findMany({
-        where: { status: "ABSENT", shift: shiftWhere },
-        select: { shiftId: true, employeeId: true },
-      }),
-    ]);
-    const exclude = [...attendancePairs, ...absentAssignments];
-    if (exclude.length === 0) {
-      return { status: { not: "ABSENT" } };
-    }
+  if (attendanceStatus === "ON_DUTY") {
+    const attendancePairs = await prisma.attendance.findMany({
+      where: {
+        shift: shiftWhere,
+        OR: [{ status: "ABSENT" }, { checkIn: { not: null } }],
+      },
+      select: { shiftId: true, employeeId: true },
+    });
+    const exclude = attendancePairs.map((pair) => ({
+      shiftId: pair.shiftId,
+      employeeId: pair.employeeId,
+    }));
     return {
       AND: [
-        { status: { not: "ABSENT" } },
-        { NOT: { OR: exclude.map((pair) => ({ shiftId: pair.shiftId, employeeId: pair.employeeId })) } },
+        { status: { notIn: ["ABSENT", "HOLIDAY"] } },
+        { shift: { endTime: { lt: now }, ...shiftWhere } },
+        ...(exclude.length > 0
+          ? [{ NOT: { OR: exclude } }]
+          : []),
+      ],
+    };
+  }
+
+  if (attendanceStatus === "SCHEDULED") {
+    return {
+      AND: [
+        { status: { notIn: ["ABSENT", "HOLIDAY"] } },
+        { shift: { endTime: { gte: now }, ...shiftWhere } },
       ],
     };
   }

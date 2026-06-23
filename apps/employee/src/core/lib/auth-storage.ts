@@ -1,16 +1,19 @@
+import type { UserRole } from "@19er/types";
+
 export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
   phone?: string;
-  role: string;
+  role: UserRole;
   hourlyRate?: number;
   isActive?: boolean;
+  createdAt?: string;
 }
 
-const ACCESS_TOKEN_KEY = "accessToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
-const USER_CACHE_KEY = "authUser";
+const ACCESS_TOKEN_KEY = "employee_accessToken";
+const REFRESH_TOKEN_KEY = "employee_refreshToken";
+const USER_CACHE_KEY = "employee_authUser";
 
 export function getToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -40,7 +43,7 @@ export function setCachedUser(user: AuthUser): void {
   localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
 }
 
-export function clearSession(): void {
+export function clearTokens(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_CACHE_KEY);

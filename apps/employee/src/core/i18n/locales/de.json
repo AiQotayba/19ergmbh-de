@@ -1,0 +1,108 @@
+{
+  "common": {
+    "loading": "Laden…",
+    "error": "Etwas ist schiefgelaufen",
+    "viewAll": "Alle anzeigen",
+    "back": "Zurück",
+    "save": "Speichern",
+    "logout": "Abmelden"
+  },
+  "nav": {
+    "home": "Start",
+    "schedule": "Dienstplan",
+    "payroll": "Gehalt",
+    "profile": "Profil"
+  },
+  "login": {
+    "title": "Mitarbeiterportal",
+    "subtitle": "Anmelden, um Dienstplan und Gehalt zu sehen",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "signIn": "Anmelden",
+    "failed": "Anmeldung fehlgeschlagen",
+    "tagline": "Logistik & Transport",
+    "heroTitle": "Ihre Arbeit",
+    "heroSubtitle": "auf einen Blick",
+    "heroDesc": "Schichten, Stunden und Gehalt — alles an einem Ort."
+  },
+  "home": {
+    "greeting": "Hallo, {{name}}!",
+    "nextShift": "Nächste Schicht",
+    "noUpcoming": "Keine anstehenden Schichten",
+    "hoursSummary": "Letzte Stunden",
+    "latestPayroll": "Letztes Gehalt",
+    "upcoming": "Anstehende Schichten",
+    "noPayroll": "Noch kein Gehalt"
+  },
+  "schedule": {
+    "title": "Mein Dienstplan",
+    "list": "Liste",
+    "calendar": "Kalender",
+    "untitled": "Ohne Titel",
+    "noShifts": "Keine Schichten in diesem Zeitraum",
+    "detailTitle": "Schichtdetails",
+    "dateRange": "Zeitraum",
+    "dailySchedule": "Tägliche Zeiten",
+    "break": "Pause",
+    "notes": "Notizen",
+    "status": "Status",
+    "calSpanDay": "Tag",
+    "calSpan3Days": "3 Tage",
+    "calSpanWeek": "Woche",
+    "calSpanMonth": "Monat",
+    "today": "Heute",
+    "previousPeriod": "Zurück",
+    "nextPeriod": "Weiter",
+    "noShiftsOnDay": "Keine Schichten",
+    "noShiftsInRange": "Keine Schichten im Zeitraum",
+    "moreOnDay": "+{{count}} weitere",
+    "weekdays": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    },
+    "attendance": {
+      "SCHEDULED": "Geplant",
+      "ON_DUTY": "Gedient",
+      "ABSENT": "Abwesend",
+      "HOLIDAY": "Frei",
+      "PRESENT": "Anwesend",
+      "LATE": "Verspätet"
+    }
+  },
+  "payroll": {
+    "title": "Mein Gehalt",
+    "detailTitle": "Gehaltsdetails",
+    "period": "Zeitraum",
+    "hours": "Arbeitsstunden",
+    "absenceHours": "Fehlstunden",
+    "salary": "Gehalt",
+    "hourlyRate": "Stundenlohn",
+    "paid": "Bezahlt",
+    "pending": "Ausstehend",
+    "paidAt": "Bezahlt am",
+    "paidAmount": "Bezahlter Betrag",
+    "noRecords": "Noch keine Gehaltsabrechnungen",
+    "hoursHint": "Stunden werden automatisch aus Ihrem Dienstplan berechnet. Abwesenheit und Feiertage werden vom Büro aktualisiert."
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "account": "Konto",
+    "password": "Passwort",
+    "fullName": "Vollständiger Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "hourlyRate": "Stundenlohn",
+    "saved": "Profil aktualisiert",
+    "passwordChanged": "Passwort geändert",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "changePassword": "Passwort ändern"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "common": {
+    "loading": "جاري التحميل…",
+    "error": "حدث خطأ",
+    "viewAll": "عرض الكل",
+    "back": "رجوع",
+    "save": "حفظ",
+    "logout": "تسجيل الخروج"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "schedule": "الجدول",
+    "payroll": "الراتب",
+    "profile": "حسابي"
+  },
+  "login": {
+    "title": "بوابة الموظف",
+    "subtitle": "سجّل الدخول لعرض جدولك وراتبك",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "signIn": "تسجيل الدخول",
+    "failed": "فشل تسجيل الدخول",
+    "tagline": "لوجستيات ونقل",
+    "heroTitle": "عملك",
+    "heroSubtitle": "بلمحة واحدة",
+    "heroDesc": "اعرض الورديات والساعات والراتب — في مكان واحد."
+  },
+  "home": {
+    "greeting": "مرحباً، {{name}}!",
+    "nextShift": "الوردية القادمة",
+    "noUpcoming": "لا توجد ورديات قادمة",
+    "hoursSummary": "آخر ساعات",
+    "latestPayroll": "آخر راتب",
+    "upcoming": "ورديات قادمة",
+    "noPayroll": "لا يوجد راتب بعد"
+  },
+  "schedule": {
+    "title": "جدول عملي",
+    "list": "قائمة",
+    "calendar": "تقويم",
+    "untitled": "بدون عنوان",
+    "noShifts": "لا توجد ورديات في هذه الفترة",
+    "detailTitle": "تفاصيل الدوام",
+    "dateRange": "نطاق التاريخ",
+    "dailySchedule": "الدوام اليومي",
+    "break": "استراحة",
+    "notes": "ملاحظات",
+    "status": "الحالة",
+    "calSpanDay": "يوم",
+    "calSpan3Days": "3 أيام",
+    "calSpanWeek": "أسبوع",
+    "calSpanMonth": "شهر",
+    "today": "اليوم",
+    "previousPeriod": "السابق",
+    "nextPeriod": "التالي",
+    "noShiftsOnDay": "لا ورديات",
+    "noShiftsInRange": "لا ورديات في النطاق",
+    "moreOnDay": "+{{count}} أخرى",
+    "weekdays": {
+      "mon": "إث",
+      "tue": "ثل",
+      "wed": "أر",
+      "thu": "خم",
+      "fri": "جم",
+      "sat": "سب",
+      "sun": "أح"
+    },
+    "attendance": {
+      "SCHEDULED": "مجدول",
+      "ON_DUTY": "مداوم",
+      "ABSENT": "غائب",
+      "HOLIDAY": "عطلة",
+      "PRESENT": "حاضر",
+      "LATE": "متأخر"
+    }
+  },
+  "payroll": {
+    "title": "راتبي",
+    "detailTitle": "تفاصيل الراتب",
+    "period": "الفترة",
+    "hours": "ساعات العمل",
+    "absenceHours": "ساعات الغياب",
+    "salary": "الراتب",
+    "hourlyRate": "الأجر بالساعة",
+    "paid": "مدفوع",
+    "pending": "قيد الانتظار",
+    "paidAt": "تاريخ الدفع",
+    "paidAmount": "المبلغ المدفوع",
+    "noRecords": "لا توجد سجلات راتب بعد",
+    "hoursHint": "تُحسب الساعات تلقائياً من جدولك. الغياب والعطلة يحدّثها المكتب."
+  },
+  "profile": {
+    "title": "ملفي",
+    "account": "الحساب",
+    "password": "كلمة المرور",
+    "fullName": "الاسم الكامل",
+    "email": "البريد",
+    "phone": "الهاتف",
+    "hourlyRate": "الأجر بالساعة",
+    "saved": "تم تحديث الملف",
+    "passwordChanged": "تم تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "changePassword": "تغيير كلمة المرور"
+  }
+}

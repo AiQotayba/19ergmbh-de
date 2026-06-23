@@ -1,6 +1,6 @@
-import { clearSession, getRefreshToken, setTokens } from "./auth-storage";
+import { clearTokens, getRefreshToken, setTokens } from "./auth-storage";
 
-const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3001").replace(/\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/$/, "");
 
 let refreshPromise: Promise<boolean> | null = null;
 
@@ -27,14 +27,14 @@ export async function refreshAccessToken(): Promise<boolean> {
       };
 
       if (!response.ok || !json.success || !json.data) {
-        clearSession();
+        clearTokens();
         return false;
       }
 
       setTokens(json.data.accessToken, json.data.refreshToken);
       return true;
     } catch {
-      clearSession();
+      clearTokens();
       return false;
     } finally {
       refreshPromise = null;

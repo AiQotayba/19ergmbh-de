@@ -162,7 +162,29 @@
     "notifyOnCreate": "Notify assigned employees about their schedule",
     "notifyChannel": "Notification channel",
     "scheduleSent": "Schedule notifications queued",
-    "sendSchedule": "Send schedule"
+    "sendSchedule": "Send schedule",
+    "viewTable": "Table",
+    "viewCalendar": "Calendar",
+    "calSpanDay": "Day",
+    "calSpan3Days": "3 days",
+    "calSpanWeek": "Week",
+    "calSpanMonth": "Month",
+    "today": "Today",
+    "previousPeriod": "Previous period",
+    "nextPeriod": "Next period",
+    "noShiftsInRange": "No shifts in the selected range",
+    "noShiftsOnDay": "No shifts on this day",
+    "shiftsOnDay": "Shifts on {{date}}",
+    "moreOnDay": "+{{count}} more",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   },
   "attendance": {
     "title": "Attendance",
@@ -187,7 +209,11 @@
     "allEmployees": "All employees",
     "date": "Date",
     "helpTitle": "How attendance works",
-    "helpText": "This roster lists every shift assignment. Search or filter to find an employee, then mark them absent for their shift.",
+    "helpText": "Employees are on duty by default. After a shift ends they count as on duty unless you mark them absent or set the day as a holiday.",
+    "onDuty": "On duty",
+    "holiday": "Holiday",
+    "markHoliday": "Mark holiday",
+    "markedHoliday": "Marked as holiday",
     "scheduled": "Scheduled",
     "actions": "Actions",
     "markedAbsent": "Marked absent"

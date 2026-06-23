@@ -162,7 +162,29 @@
     "notifyOnCreate": "Zugewiesene Mitarbeiter über ihren Dienstplan benachrichtigen",
     "notifyChannel": "Benachrichtigungskanal",
     "scheduleSent": "Dienstplan-Benachrichtigungen eingeplant",
-    "sendSchedule": "Dienstplan senden"
+    "sendSchedule": "Dienstplan senden",
+    "viewTable": "Tabelle",
+    "viewCalendar": "Kalender",
+    "calSpanDay": "Tag",
+    "calSpan3Days": "3 Tage",
+    "calSpanWeek": "Woche",
+    "calSpanMonth": "Monat",
+    "today": "Heute",
+    "previousPeriod": "Vorheriger Zeitraum",
+    "nextPeriod": "Nächster Zeitraum",
+    "noShiftsInRange": "Keine Schichten im gewählten Zeitraum",
+    "noShiftsOnDay": "Keine Schichten an diesem Tag",
+    "shiftsOnDay": "Schichten am {{date}}",
+    "moreOnDay": "+{{count}} weitere",
+    "weekdays": {
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "So"
+    }
   },
   "attendance": {
     "title": "Anwesenheit",
@@ -187,7 +209,11 @@
     "allEmployees": "Alle Mitarbeiter",
     "date": "Datum",
     "helpTitle": "So funktioniert die Anwesenheit",
-    "helpText": "Diese Liste zeigt alle Schichtzuweisungen. Suchen oder filtern Sie, um einen Mitarbeiter zu finden, und markieren Sie ihn für seine Schicht als abwesend.",
+    "helpText": "Mitarbeiter gelten standardmäßig als im Dienst. Nach Schichtende zählen sie als anwesend, sofern Sie nicht abwesend oder als Feiertag markiert sind.",
+    "onDuty": "Im Dienst",
+    "holiday": "Feiertag",
+    "markHoliday": "Als Feiertag markieren",
+    "markedHoliday": "Als Feiertag markiert",
     "scheduled": "Geplant",
     "actions": "Aktionen",
     "markedAbsent": "Als abwesend markiert"

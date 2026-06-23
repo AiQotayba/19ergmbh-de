@@ -4,7 +4,9 @@ export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE";
 
 export type ShiftStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
 
-export type ShiftEmployeeStatus = "SCHEDULED" | "CONFIRMED" | "ABSENT" | "COMPLETED";
+export type ShiftEmployeeStatus = "SCHEDULED" | "CONFIRMED" | "ABSENT" | "HOLIDAY" | "COMPLETED";
+
+export type RosterStatus = "SCHEDULED" | "ON_DUTY" | "PRESENT" | "LATE" | "ABSENT" | "HOLIDAY";
 
 export type NotificationChannel = "EMAIL" | "WHATSAPP";
 

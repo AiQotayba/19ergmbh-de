@@ -1,3 +1,4 @@
+export * from "./attendance/index.js";
 export * from "./constants/index.js";
 export * from "./errors/index.js";
 export * from "./payroll/index.js";

@@ -1,0 +1,108 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "viewAll": "View all",
+    "back": "Back",
+    "save": "Save",
+    "logout": "Log out"
+  },
+  "nav": {
+    "home": "Home",
+    "schedule": "Schedule",
+    "payroll": "Payroll",
+    "profile": "Profile"
+  },
+  "login": {
+    "title": "Employee portal",
+    "subtitle": "Sign in to view your schedule and payroll",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "failed": "Login failed",
+    "tagline": "Logistics & Transport",
+    "heroTitle": "Your work",
+    "heroSubtitle": "at a glance",
+    "heroDesc": "View shifts, hours, and payroll — all in one place."
+  },
+  "home": {
+    "greeting": "Hello, {{name}}!",
+    "nextShift": "Next shift",
+    "noUpcoming": "No upcoming shifts",
+    "hoursSummary": "Latest hours",
+    "latestPayroll": "Latest payroll",
+    "upcoming": "Upcoming shifts",
+    "noPayroll": "No payroll yet"
+  },
+  "schedule": {
+    "title": "My schedule",
+    "list": "List",
+    "calendar": "Calendar",
+    "untitled": "Untitled shift",
+    "noShifts": "No shifts in this period",
+    "detailTitle": "Shift details",
+    "dateRange": "Date range",
+    "dailySchedule": "Daily schedule",
+    "break": "Break",
+    "notes": "Notes",
+    "status": "Status",
+    "calSpanDay": "Day",
+    "calSpan3Days": "3 days",
+    "calSpanWeek": "Week",
+    "calSpanMonth": "Month",
+    "today": "Today",
+    "previousPeriod": "Previous",
+    "nextPeriod": "Next",
+    "noShiftsOnDay": "No shifts",
+    "noShiftsInRange": "No shifts in range",
+    "moreOnDay": "+{{count}} more",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "attendance": {
+      "SCHEDULED": "Scheduled",
+      "ON_DUTY": "On duty",
+      "ABSENT": "Absent",
+      "HOLIDAY": "Holiday",
+      "PRESENT": "Present",
+      "LATE": "Late"
+    }
+  },
+  "payroll": {
+    "title": "My payroll",
+    "detailTitle": "Payroll details",
+    "period": "Period",
+    "hours": "Worked hours",
+    "absenceHours": "Absence hours",
+    "salary": "Salary",
+    "hourlyRate": "Hourly rate",
+    "paid": "Paid",
+    "pending": "Pending",
+    "paidAt": "Paid on",
+    "paidAmount": "Paid amount",
+    "noRecords": "No payroll records yet",
+    "hoursHint": "Hours are calculated automatically from your schedule. Absence and holidays are updated by the office."
+  },
+  "profile": {
+    "title": "My profile",
+    "account": "Account",
+    "password": "Password",
+    "fullName": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "hourlyRate": "Hourly rate",
+    "saved": "Profile updated",
+    "passwordChanged": "Password changed",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match",
+    "changePassword": "Change password"
+  }
+}

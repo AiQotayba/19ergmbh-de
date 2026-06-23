@@ -162,7 +162,29 @@
     "notifyOnCreate": "إشعار الموظفين المعيّنين بجدول دوامهم",
     "notifyChannel": "قناة الإشعار",
     "scheduleSent": "تم جدولة إشعارات الجدول",
-    "sendSchedule": "إرسال الجدول"
+    "sendSchedule": "إرسال الجدول",
+    "viewTable": "جدول",
+    "viewCalendar": "تقويم",
+    "calSpanDay": "يوم",
+    "calSpan3Days": "3 أيام",
+    "calSpanWeek": "أسبوع",
+    "calSpanMonth": "شهر",
+    "today": "اليوم",
+    "previousPeriod": "الفترة السابقة",
+    "nextPeriod": "الفترة التالية",
+    "noShiftsInRange": "لا توجد ورديات في النطاق المحدد",
+    "noShiftsOnDay": "لا توجد ورديات في هذا اليوم",
+    "shiftsOnDay": "ورديات يوم {{date}}",
+    "moreOnDay": "+{{count}} أخرى",
+    "weekdays": {
+      "mon": "إث",
+      "tue": "ثل",
+      "wed": "أر",
+      "thu": "خم",
+      "fri": "جم",
+      "sat": "سب",
+      "sun": "أح"
+    }
   },
   "attendance": {
     "title": "الحضور",
@@ -187,7 +209,11 @@
     "allEmployees": "جميع الموظفين",
     "date": "التاريخ",
     "helpTitle": "كيف يعمل الحضور",
-    "helpText": "يعرض هذا الجدول كل تعيينات الورديات. ابحث أو صفِّ لإيجاد موظف، ثم حدّده كغائب لورديته.",
+    "helpText": "الموظفون مداومون افتراضياً. بعد انتهاء الوردية يُحسبون مداومين ما لم تُحدّدهم غائبين أو تُعلّم اليوم عطلة.",
+    "onDuty": "مداوم",
+    "holiday": "عطلة",
+    "markHoliday": "تحديد عطلة",
+    "markedHoliday": "تم تحديد العطلة",
     "scheduled": "مجدول",
     "actions": "إجراءات",
     "markedAbsent": "تم تسجيل الغياب"

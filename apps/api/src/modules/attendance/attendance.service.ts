@@ -3,11 +3,12 @@ import type { Prisma } from "@19er/db";
 import { BadRequestError, ForbiddenError, NotFoundError, buildDateRangeWhere, parsePagination, parseSortOrder } from "@19er/shared";
 import { parseListDateRange } from "../../shared/list-query.js";
 import type { z } from "zod";
-import type { checkInSchema, checkOutSchema, markAbsentSchema } from "./attendance.validators.js";
+import type { checkInSchema, checkOutSchema, markAbsentSchema, markHolidaySchema } from "./attendance.validators.js";
 
 type CheckInInput = z.infer<typeof checkInSchema>;
 type CheckOutInput = z.infer<typeof checkOutSchema>;
 type MarkAbsentInput = z.infer<typeof markAbsentSchema>;
+type MarkHolidayInput = z.infer<typeof markHolidaySchema>;
 
 async function ensureAssignment(shiftId: string, employeeId: string) {
   const assignment = await prisma.shiftEmployee.findUnique({
@@ -156,6 +157,29 @@ export async function markAbsent(input: MarkAbsentInput) {
       employee: { select: { id: true, fullName: true } },
     },
   });
+}
+
+export async function markHoliday(input: MarkHolidayInput) {
+  await ensureAssignment(input.shiftId, input.employeeId);
+
+  const existing = await prisma.attendance.findUnique({
+    where: { employeeId_shiftId: { employeeId: input.employeeId, shiftId: input.shiftId } },
+  });
+
+  await prisma.shiftEmployee.update({
+    where: {
+      shiftId_employeeId: { shiftId: input.shiftId, employeeId: input.employeeId },
+    },
+    data: { status: "HOLIDAY" },
+  });
+
+  if (existing) {
+    return prisma.attendance.delete({
+      where: { id: existing.id },
+    });
+  }
+
+  return { shiftId: input.shiftId, employeeId: input.employeeId, status: "HOLIDAY" as const };
 }
 
 function normalizeAttendanceListQuery(query: {

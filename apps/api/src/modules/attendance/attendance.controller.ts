@@ -2,7 +2,7 @@ import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "@19er/auth";
 import { sendSuccess } from "../../shared/response.js";
 import * as attendanceService from "./attendance.service.js";
-import { checkInSchema, checkOutSchema, markAbsentSchema } from "./attendance.validators.js";
+import { checkInSchema, checkOutSchema, markAbsentSchema, markHolidaySchema } from "./attendance.validators.js";
 
 export async function checkInHandler(
   req: AuthenticatedRequest,
@@ -48,6 +48,20 @@ export async function markAbsentHandler(
   try {
     const input = markAbsentSchema.parse(req.body);
     const record = await attendanceService.markAbsent(input);
+    sendSuccess(res, record);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function markHolidayHandler(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const input = markHolidaySchema.parse(req.body);
+    const record = await attendanceService.markHoliday(input);
     sendSuccess(res, record);
   } catch (err) {
     next(err);

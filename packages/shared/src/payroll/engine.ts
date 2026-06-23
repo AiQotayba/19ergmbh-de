@@ -1,4 +1,5 @@
 import { calculateSalary, calculateWorkedHours } from "../utils/index.js";
+import { deriveRosterStatus, isShiftEnded } from "../attendance/roster-status.js";
 
 export type PayrollShiftInput = {
   fromDate: Date;
@@ -6,6 +7,7 @@ export type PayrollShiftInput = {
   dailyStartTime: string;
   dailyEndTime: string;
   breakMinutes: number;
+  endTime: Date;
 };
 
 export type PayrollAssignmentInput = {
@@ -102,10 +104,21 @@ export function computeEmployeePayrollTotals(
     );
     scheduledHours += shiftScheduled;
 
-    const isAbsent =
-      assignment.assignmentStatus === "ABSENT" || assignment.attendance?.status === "ABSENT";
+    const rosterStatus = deriveRosterStatus({
+      assignmentStatus: assignment.assignmentStatus,
+      attendance: assignment.attendance,
+      shift: assignment.shift,
+    });
 
-    if (isAbsent) {
+    if (!isShiftEnded(assignment.shift)) {
+      continue;
+    }
+
+    if (rosterStatus === "HOLIDAY") {
+      continue;
+    }
+
+    if (rosterStatus === "ABSENT") {
       absenceHours += shiftScheduled;
       continue;
     }
@@ -116,6 +129,11 @@ export function computeEmployeePayrollTotals(
         assignment.attendance.checkOut,
         assignment.shift.breakMinutes,
       );
+      continue;
+    }
+
+    if (rosterStatus === "ON_DUTY" || rosterStatus === "PRESENT" || rosterStatus === "LATE") {
+      workedHours += shiftScheduled;
     }
   }
 

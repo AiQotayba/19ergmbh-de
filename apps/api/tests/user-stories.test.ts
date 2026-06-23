@@ -13,6 +13,7 @@ import {
   login,
   loginAsAdmin,
   loginAsEmployee,
+  pastShiftSchedule,
   payrollPeriodForShift,
   recordAttendanceForPayroll,
   SEED,
@@ -427,15 +428,90 @@ describe("US-16: Mark absent", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe("ABSENT");
   });
+
+  it("past roster shows on duty by default", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const times = pastShiftSchedule(0);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "Roster Past", 0, times);
+
+    const res = await request(getApp())
+      .get("/shift-employees")
+      .query({ employeeId: employee.user.id })
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.items[0].attendanceStatus).toBe("ON_DUTY");
+  });
+
+  it("admin marks employee holiday for a shift", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const times = pastShiftSchedule(0);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Holiday Shift",
+      0,
+      times,
+    );
+
+    const res = await request(getApp())
+      .post("/attendance/holiday")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ shiftId: shift.id, employeeId: employee.user.id });
+
+    expect(res.status).toBe(200);
+
+    const roster = await request(getApp())
+      .get("/shift-employees")
+      .query({ employeeId: employee.user.id })
+      .set(bearer(admin.tokens.accessToken));
+
+    expect(roster.body.data.items[0].attendanceStatus).toBe("HOLIDAY");
+  });
 });
 
 // ─── 6. Payroll ──────────────────────────────────────────────────────────
 
 describe("US-17 & US-18: Payroll run and hours calculation", () => {
-  it("calculates hours from attendance and creates payroll run", async () => {
+  it("credits ended shifts as on duty without check-in", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
+    await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Past On Duty Shift",
+      0,
+      times,
+    );
+
+    const run = await request(getApp())
+      .post("/payroll/run")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    expect(run.status).toBe(201);
+    const payroll = run.body.data.payrolls.find(
+      (p: { employeeId: string }) => p.employeeId === employee.user.id,
+    );
+    expect(payroll).toBeDefined();
+    expect(payroll.totalHours).toBeGreaterThan(0);
+    expect(payroll.salary).toBeCloseTo(payroll.totalHours * payroll.hourlyRate, 2);
+  });
+
+  it("calculates hours from attendance on ended shift", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const times = pastShiftSchedule(0);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Past Checked In Shift",
+      0,
+      times,
+    );
     const period = payrollPeriodForShift(times);
 
     await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
@@ -451,13 +527,19 @@ describe("US-17 & US-18: Payroll run and hours calculation", () => {
     );
     expect(payroll).toBeDefined();
     expect(payroll.totalHours).toBeGreaterThan(0);
-    expect(payroll.salary).toBeCloseTo(payroll.totalHours * payroll.hourlyRate, 2);
   });
 
   it("accepts YYYY-MM-DD date strings for payroll run", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Past Payroll Shift",
+      0,
+      times,
+    );
 
     await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
 
@@ -473,7 +555,14 @@ describe("US-17 & US-18: Payroll run and hours calculation", () => {
   it("counts absence hours when employee is marked absent", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Past Absent Shift",
+      0,
+      times,
+    );
 
     await request(getApp())
       .post("/attendance/absent")
@@ -495,11 +584,46 @@ describe("US-17 & US-18: Payroll run and hours calculation", () => {
     expect(payroll.salary).toBe(0);
   });
 
+  it("excludes holiday shifts from payroll hours", async () => {
+    const admin = await loginAsAdmin();
+    const employee = await createTestEmployee(admin.tokens.accessToken);
+    const times = pastShiftSchedule(0);
+    const { shift } = await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Past Holiday Shift",
+      0,
+      times,
+    );
+
+    await request(getApp())
+      .post("/attendance/holiday")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ shiftId: shift.id, employeeId: employee.user.id });
+
+    const run = await request(getApp())
+      .post("/payroll/run")
+      .set(bearer(admin.tokens.accessToken))
+      .send({ fromDate: times.fromDate, toDate: times.toDate });
+
+    expect(run.status).toBe(201);
+    const payroll = run.body.data.payrolls.find(
+      (p: { employeeId: string }) => p.employeeId === employee.user.id,
+    );
+    expect(payroll).toBeUndefined();
+  });
+
   it("POST /payroll/preview returns lines without creating a run", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    const times = pastShiftSchedule(0);
+    await createShiftAndAssign(
+      admin.tokens.accessToken,
+      employee.user.id,
+      "Preview Shift",
+      0,
+      times,
+    );
 
     const before = await request(getApp())
       .get("/payroll/runs")
@@ -545,8 +669,8 @@ describe("US-19: View payrolls", () => {
   it("admin deletes a payroll run", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    const times = pastShiftSchedule(0);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "Delete Run Shift", 0, times);
 
     const run = await request(getApp())
       .post("/payroll/run")
@@ -577,10 +701,9 @@ describe("US-21: Salary notification on payroll", () => {
   it("does not auto-send salary notifications when payroll run completes", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
     const period = payrollPeriodForShift(times);
-
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "No Notify Shift", 0, times);
 
     await request(getApp())
       .post("/payroll/run")
@@ -621,10 +744,9 @@ describe("US-23: Salary notification batch", () => {
   it("admin sends salary notifications for a payroll run", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
     const period = payrollPeriodForShift(times);
-
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "Salary Notify Shift", 0, times);
 
     const run = await request(getApp())
       .post("/payroll/run")
@@ -743,10 +865,9 @@ describe("US-27: Employee current payroll", () => {
   it("employee views own payroll records", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
     const period = payrollPeriodForShift(times);
-
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "My Payroll Shift", 0, times);
 
     await request(getApp())
       .post("/payroll/run")
@@ -804,10 +925,9 @@ describe("Payroll mark paid & unassign shift", () => {
   it("admin marks payroll as paid", async () => {
     const admin = await loginAsAdmin();
     const employee = await createTestEmployee(admin.tokens.accessToken);
-    const { shift, times } = await createShiftAndAssign(admin.tokens.accessToken, employee.user.id);
+    const times = pastShiftSchedule(0);
     const period = payrollPeriodForShift(times);
-
-    await recordAttendanceForPayroll(employee.tokens.accessToken, employee.user.id, shift.id);
+    await createShiftAndAssign(admin.tokens.accessToken, employee.user.id, "Mark Paid Shift", 0, times);
 
     const run = await request(getApp())
       .post("/payroll/run")

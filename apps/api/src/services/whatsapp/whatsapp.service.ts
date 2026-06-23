@@ -67,6 +67,7 @@ export async function sendWhatsAppMessage(
 
     const result = await parseWhatsAppResponse(res);
     if (!result.ok) {
+      console.log(result);
       console.error("[whatsapp] send-message failed:", result.msg ?? res.status);
       return { ok: false, skipped: false, error: result.msg ?? `HTTP ${res.status}` };
     }
