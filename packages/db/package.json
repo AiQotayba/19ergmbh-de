@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "node scripts/with-root-env.mjs generate && tsc",
     "dev": "tsc --watch",
     "db:generate": "node scripts/with-root-env.mjs generate",
     "db:push": "node scripts/with-root-env.mjs db push --skip-generate",

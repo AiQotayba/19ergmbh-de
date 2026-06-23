@@ -59,7 +59,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      const text = getNested(messages[locale], key) ?? getNested(messages.en, key) ?? key;
+      const text = getNested(messages[locale], key) ?? getNested(messages.de, key) ?? key;
       return interpolate(text, vars);
     },
     [locale],

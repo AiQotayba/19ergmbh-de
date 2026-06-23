@@ -8,10 +8,12 @@ import { materializePrismaSchema } from "./materialize-schema.mjs";
 const dbRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = resolve(dbRoot, "../..");
 
+const preservePlatformEnv = Boolean(process.env.VERCEL || process.env.CI);
+
 for (const name of [".env", ".env.local"]) {
   const envPath = resolve(repoRoot, name);
   if (existsSync(envPath)) {
-    config({ path: envPath, override: true });
+    config({ path: envPath, override: !preservePlatformEnv });
   }
 }
 

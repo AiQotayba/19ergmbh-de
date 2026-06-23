@@ -5,7 +5,7 @@ import { processNotificationQueue } from "../services/notifications/notification
 let started = false;
 
 export function startNotificationCron() {
-  if (started || !env.notificationCronEnabled) return;
+  if (started || !env.notificationCronEnabled || env.isVercel) return;
   started = true;
 
   cron.schedule(env.notificationCronExpression, () => {

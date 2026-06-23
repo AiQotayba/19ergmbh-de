@@ -4,9 +4,11 @@ import { resolve } from "node:path";
 const apiRoot = process.cwd();
 const monorepoRoot = resolve(apiRoot, "../..");
 
-config({ path: resolve(monorepoRoot, ".env"), override: true });
-config({ path: resolve(monorepoRoot, ".env.local"), override: true });
-config({ path: resolve(apiRoot, ".env"), override: true });
+const preservePlatformEnv = Boolean(process.env.VERCEL || process.env.CI);
+
+config({ path: resolve(monorepoRoot, ".env"), override: !preservePlatformEnv });
+config({ path: resolve(monorepoRoot, ".env.local"), override: !preservePlatformEnv });
+config({ path: resolve(apiRoot, ".env"), override: !preservePlatformEnv });
 
 const nodeEnv = process.env.NODE_ENV ?? "development";
 
@@ -37,4 +39,6 @@ export const env = {
   notificationCronEnabled: process.env.NOTIFICATION_CRON_ENABLED !== "false",
   notificationCronExpression: process.env.NOTIFICATION_CRON ?? "*/10 * * * *",
   notificationInstantDrain: nodeEnv === "test" || process.env.NOTIFICATION_INSTANT_DRAIN === "true",
+  cronSecret: process.env.CRON_SECRET ?? "",
+  isVercel: Boolean(process.env.VERCEL),
 };

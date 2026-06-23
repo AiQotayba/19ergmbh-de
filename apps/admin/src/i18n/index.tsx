@@ -38,7 +38,7 @@ function detectLocale(): Locale {
   const browser = navigator.language.slice(0, 2);
   if (browser === "de") return "de";
   if (browser === "ar") return "ar";
-  return "en";
+  return "de";
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
@@ -58,7 +58,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, string | number>) => {
-      const text = getNested(messages[locale], key) ?? getNested(messages.en, key) ?? key;
+      const text = getNested(messages[locale], key) ?? getNested(messages.de, key) ?? key;
       return interpolate(text, vars);
     },
     [locale],

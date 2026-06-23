@@ -11,6 +11,7 @@ import payrollRoutes from "./modules/payroll/payroll.routes.js";
 import notificationsRoutes from "./modules/notifications/notifications.routes.js";
 import meRoutes from "./modules/me/me.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
+import cronRoutes from "./modules/cron/cron.routes.js";
 
 export function createApp() {
   const app = express();
@@ -42,6 +43,7 @@ export function createApp() {
   app.use("/me", meRoutes);
   app.use("/dashboard", dashboardRoutes);
   app.use("/system", dashboardRoutes);
+  app.use("/cron", cronRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

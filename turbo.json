@@ -1,5 +1,15 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "VITE_API_URL",
+    "DATABASE_URL",
+    "DATABASE_PROVIDER",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "CORS_ORIGIN",
+    "NODE_ENV",
+    "CRON_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

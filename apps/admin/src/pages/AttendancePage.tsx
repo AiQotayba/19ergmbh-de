@@ -48,7 +48,7 @@ interface RosterRow {
   };
 }
 
-const statusVariant: Record<string, "success" | "destructive" | "warning" | "outline" | "secondary"> = {
+const statusVariant: Record<string, "success" | "destructive" | "warning" | "outline" | "info"> = {
   PRESENT: "success",
   ON_DUTY: "success",
   ABSENT: "destructive",
