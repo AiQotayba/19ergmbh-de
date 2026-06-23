@@ -18,6 +18,16 @@ export function isEmailConfigured() {
   return Boolean(transporter);
 }
 
+/** Gmail rejects or drops mail when From ≠ authenticated SMTP user (unless "send as" is configured). */
+export function resolveEmailFrom(): string {
+  const user = env.smtpUser.trim();
+  const from = env.smtpFrom.trim();
+  if (!user) return from;
+  if (!from || from.toLowerCase() === user.toLowerCase()) return from || user;
+  if (env.smtpHost.includes("gmail.com")) return user;
+  return from;
+}
+
 export async function sendEmail(input: {
   to: string;
   subject: string;
@@ -31,7 +41,7 @@ export async function sendEmail(input: {
 
   try {
     await transporter.sendMail({
-      from: env.smtpFrom,
+      from: resolveEmailFrom(),
       to: input.to,
       subject: input.subject,
       text: input.text,

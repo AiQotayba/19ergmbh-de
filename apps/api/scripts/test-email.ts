@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer";
 import { env } from "../src/config/env.js";
-import { isEmailConfigured, sendEmail } from "../src/services/email/email.service.js";
+import {
+  isEmailConfigured,
+  resolveEmailFrom,
+  sendEmail,
+} from "../src/services/email/email.service.js";
 import { scheduleNotificationEmail } from "../src/services/email/templates.js";
 
 const quick = process.argv.includes("--quick");
@@ -17,6 +21,12 @@ async function main() {
   console.info(`SMTP_PORT: ${env.smtpPort}`);
   console.info(`SMTP_USER: ${mask(env.smtpUser)}`);
   console.info(`SMTP_FROM: ${env.smtpFrom}`);
+  const effectiveFrom = resolveEmailFrom();
+  if (effectiveFrom !== env.smtpFrom.trim()) {
+    console.info(
+      `effective From: ${effectiveFrom} (SMTP_FROM differs from SMTP_USER — using authenticated address)`,
+    );
+  }
   console.info(`configured: ${isEmailConfigured()}\n`);
 
   if (!isEmailConfigured()) {
@@ -54,13 +64,16 @@ async function main() {
     timeLabel: "09:00 – 17:00",
   });
 
+  const started = Date.now();
   const result = await sendEmail({ to, ...tpl });
+  const elapsed = ((Date.now() - started) / 1000).toFixed(1);
   if (!result.ok) {
     console.error("Send failed:", "error" in result ? result.error : "unknown");
     process.exit(1);
   }
 
-  console.info(`Test email sent to ${to}`);
+  console.info(`Test email sent to ${to} (from ${effectiveFrom}, ${elapsed}s)`);
+  console.info("Check inbox and Spam. Gmail may take 1–2 minutes.");
   process.exit(0);
 }
 
