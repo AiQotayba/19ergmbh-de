@@ -57,7 +57,7 @@ export function LoginPage() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center p-6">
-        <div className="mb-4 w-full max-w-md lg:hidden">
+        <div className="mb-4 w-full max-w-md">
           <LanguageSwitcher className="justify-end" />
         </div>
         <Card className="w-full max-w-md border-0 shadow-[var(--shadow-float)]">
