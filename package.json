@@ -16,7 +16,8 @@
     "db:studio": "pnpm --filter @19er/db db:studio",
     "db:test": "pnpm --filter @19er/db db:test",
     "test": "turbo test --filter=@19er/api",
-    "test:api": "pnpm --filter @19er/api test"
+    "test:api": "pnpm --filter @19er/api test",
+    "deploy:api": "bash deploy/deploy-api.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

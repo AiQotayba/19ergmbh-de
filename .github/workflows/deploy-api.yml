@@ -1,0 +1,71 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "deploy/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          API_ENV: ${{ secrets.API_ENV }}
+          DEPLOY_REPO: ${{ secrets.DEPLOY_REPO || 'https://github.com/AiQotayba/19ergmbh-de.git' }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: API_ENV,DEPLOY_REPO
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="${DEPLOY_DIR:-$HOME/htdocs/api.19ergmbh-de.com}"
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            corepack enable 2>/dev/null || true
+
+            if [ ! -d .git ]; then
+              if [ -z "$(ls -A)" ]; then
+                git clone "$DEPLOY_REPO" .
+              else
+                git init -b main
+                git remote add origin "$DEPLOY_REPO"
+              fi
+            fi
+
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            if [ -n "${API_ENV:-}" ]; then
+              printf '%s\n' "$API_ENV" > .env
+            elif [ ! -f .env ]; then
+              echo "No .env on server and API_ENV secret is empty"
+              exit 1
+            fi
+
+            chmod +x deploy/deploy-api.sh
+            bash deploy/deploy-api.sh

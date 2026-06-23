@@ -1,0 +1,3 @@
+# Ensure shell scripts use LF on checkout (required for Linux deploy)
+*.sh text eol=lf
+deploy/deploy-api.sh text eol=lf
