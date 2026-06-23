@@ -17,11 +17,25 @@ for (const name of [".env", ".env.local"]) {
   }
 }
 
-const dbUrl = process.env.DATABASE_URL?.trim();
-const dbProvider = process.env.DATABASE_PROVIDER?.trim().toLowerCase();
-const validDb =
+const args = process.argv.slice(2);
+const isGenerateOnly = args.length === 1 && args[0] === "generate";
+
+// Prisma generate only materializes the schema — no live DB connection.
+// Vercel frontend projects may build @19er/db transitively without DATABASE_URL.
+if (
+  isGenerateOnly &&
+  (process.env.VERCEL || process.env.CI) &&
+  !process.env.DATABASE_URL?.trim()
+) {
+  process.env.DATABASE_URL = "postgresql://build:build@127.0.0.1:5432/build";
+  process.env.DATABASE_PROVIDER = "postgresql";
+}
+
+let dbUrl = process.env.DATABASE_URL?.trim();
+let dbProvider = process.env.DATABASE_PROVIDER?.trim().toLowerCase();
+let validDb =
   dbUrl?.startsWith("mysql://") || dbUrl?.startsWith("postgresql://");
-const validProvider = dbProvider === "mysql" || dbProvider === "postgresql";
+let validProvider = dbProvider === "mysql" || dbProvider === "postgresql";
 
 if (!validDb) {
   const preview = dbUrl
@@ -57,7 +71,6 @@ if (
 
 materializePrismaSchema(dbProvider, dbRoot);
 
-const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error("Usage: node scripts/with-root-env.mjs <prisma-args...>");
   process.exit(1);
