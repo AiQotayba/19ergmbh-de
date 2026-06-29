@@ -8,7 +8,13 @@ import {
   hashRefreshToken,
   verifyRefreshToken,
 } from "@19er/auth";
-import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "@19er/shared";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from "@19er/shared";
 import type { AuthTokens } from "@19er/types";
 import type { z } from "zod";
 import type { changePasswordSchema, loginSchema, registerSchema } from "./auth.validators.js";
@@ -29,15 +35,22 @@ async function storeRefreshToken(userId: string, refreshToken: string): Promise<
   });
 }
 
-export async function login(input: LoginInput): Promise<{ user: unknown; tokens: AuthTokens }> {
+export async function login(
+  input: LoginInput,
+  options?: { fromAdminPortal?: boolean },
+): Promise<{ user: unknown; tokens: AuthTokens }> {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user || !user.isActive) {
-    throw new UnauthorizedError("Invalid credentials");
+    throw new UnauthorizedError("auth.invalid_credentials");
   }
 
   const valid = await comparePassword(input.password, user.password);
   if (!valid) {
-    throw new UnauthorizedError("Invalid credentials");
+    throw new UnauthorizedError("auth.invalid_credentials");
+  }
+
+  if (options?.fromAdminPortal && user.role === "EMPLOYEE") {
+    throw new ForbiddenError("auth.admin_only");
   }
 
   const config = createJwtConfig();
@@ -53,7 +66,7 @@ export async function register(input: RegisterInput): Promise<{ user: unknown; t
     where: { OR: [{ email: input.email }, { phone: input.phone }] },
   });
   if (existing) {
-    throw new ConflictError("Email or phone already in use");
+    throw new ConflictError("auth.email_or_phone_in_use");
   }
 
   const hashed = await hashPassword(input.password);
@@ -82,20 +95,20 @@ export async function refresh(refreshToken: string): Promise<AuthTokens> {
   try {
     payload = verifyRefreshToken(refreshToken, config);
   } catch {
-    throw new UnauthorizedError("Invalid refresh token");
+    throw new UnauthorizedError("auth.invalid_refresh_token");
   }
 
   const hashed = hashRefreshToken(refreshToken);
   const stored = await prisma.refreshToken.findUnique({ where: { token: hashed } });
   if (!stored || stored.expiresAt < new Date()) {
-    throw new UnauthorizedError("Refresh token expired or revoked");
+    throw new UnauthorizedError("auth.refresh_expired");
   }
 
   await prisma.refreshToken.delete({ where: { id: stored.id } });
 
   const user = await prisma.user.findUnique({ where: { id: payload.sub } });
   if (!user || !user.isActive) {
-    throw new UnauthorizedError("User not found or inactive");
+    throw new UnauthorizedError("auth.user_inactive");
   }
 
   const tokens = generateTokenPair(user.id, user.email, user.role, config);
@@ -114,12 +127,12 @@ export async function changePassword(
 ): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
-    throw new NotFoundError("User not found");
+    throw new NotFoundError("auth.user_not_found");
   }
 
   const valid = await comparePassword(input.currentPassword, user.password);
   if (!valid) {
-    throw new BadRequestError("Current password is incorrect");
+    throw new BadRequestError("auth.password_incorrect");
   }
 
   const hashed = await hashPassword(input.newPassword);

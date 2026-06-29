@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useI18n } from "@/i18n";
 import { api, setUnauthorizedHandler } from "@/lib/api-client";
 import {
   clearTokens,
@@ -40,6 +41,7 @@ function readInitialUser(): AuthUser | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [user, setUser] = useState<AuthUser | null>(readInitialUser);
   const [isLoading, setIsLoading] = useState(() => !readInitialUser() && hasStoredSession());
   const [isValidating, setIsValidating] = useState(() => hasStoredSession());
@@ -53,6 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const response = await api.get<AuthUser>("/me", { showErrorToast: false });
     if (response.isError || !response.data) {
+      clearTokens();
+      setUser(null);
+      return;
+    }
+
+    if (response.data.role !== "ADMIN") {
       clearTokens();
       setUser(null);
       return;
@@ -101,17 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.post<{
       user: AuthUser;
       tokens: { accessToken: string; refreshToken: string };
-    }>("/auth/login", { email, password }, { showSuccessToast: true, successMessage: "Signed in" });
+    }>("/auth/login", { email, password }, { showSuccessToast: true, successMessage: t("login.signedIn") });
 
     if (response.isError || !response.data) {
       throw new Error(response.message || "Login failed");
+    }
+
+    if (response.data.user.role !== "ADMIN") {
+      clearTokens();
+      throw new Error("ADMIN_ACCESS_ONLY");
     }
 
     setTokens(response.data.tokens.accessToken, response.data.tokens.refreshToken);
     setCachedUser(response.data.user);
     setUser(response.data.user);
     setIsValidating(false);
-  }, []);
+  }, [t]);
 
   const logout = useCallback(async () => {
     const refreshToken = getRefreshToken();

@@ -1,19 +1,31 @@
 import type { NextFunction, Request, Response } from "express";
+import { parseAcceptLanguage, translate, type Locale } from "@19er/i18n";
 import { Prisma } from "@19er/db";
-import { AppError, ConflictError, NotFoundError } from "@19er/shared";
+import { AppError } from "@19er/shared";
 import { ZodError } from "zod";
+
+export function localeMiddleware(req: Request, _res: Response, next: NextFunction): void {
+  req.locale = parseAcceptLanguage(req.headers["accept-language"]);
+  next();
+}
+
+export function getRequestLocale(req: Request): Locale {
+  return req.locale ?? parseAcceptLanguage(req.headers["accept-language"]);
+}
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
+  const locale = getRequestLocale(req);
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       success: false,
-      error: err.message,
-      code: err.code,
+      error: translate(locale, err.messageKey, err.params),
+      code: err.messageKey,
     });
     return;
   }
@@ -21,7 +33,8 @@ export function errorHandler(
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
-      error: "Validation failed",
+      error: translate(locale, "common.validation_failed"),
+      code: "common.validation_failed",
       details: err.flatten().fieldErrors,
     });
     return;
@@ -29,21 +42,19 @@ export function errorHandler(
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
-      const notFound = new NotFoundError("Resource not found");
-      res.status(notFound.statusCode).json({
+      res.status(404).json({
         success: false,
-        error: notFound.message,
-        code: err.code,
+        error: translate(locale, "common.resource_not_found"),
+        code: "common.resource_not_found",
       });
       return;
     }
 
     if (err.code === "P2003") {
-      const conflict = new ConflictError("Cannot delete: related records still exist");
-      res.status(conflict.statusCode).json({
+      res.status(409).json({
         success: false,
-        error: conflict.message,
-        code: err.code,
+        error: translate(locale, "common.cannot_delete_related"),
+        code: "common.cannot_delete_related",
       });
       return;
     }
@@ -52,13 +63,24 @@ export function errorHandler(
   console.error(err);
   res.status(500).json({
     success: false,
-    error: "Internal server error",
+    error: translate(locale, "common.internal_error"),
+    code: "common.internal_error",
   });
 }
 
-export function notFoundHandler(_req: Request, res: Response): void {
+export function notFoundHandler(req: Request, res: Response): void {
+  const locale = getRequestLocale(req);
   res.status(404).json({
     success: false,
-    error: "Route not found",
+    error: translate(locale, "common.route_not_found"),
+    code: "common.route_not_found",
   });
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      locale?: Locale;
+    }
+  }
 }

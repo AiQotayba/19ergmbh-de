@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { env } from "./config/env.js";
-import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import { errorHandler, localeMiddleware, notFoundHandler } from "./middlewares/error.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import usersRoutes from "./modules/users/users.routes.js";
 import shiftsRoutes from "./modules/shifts/shifts.routes.js";
@@ -20,9 +20,10 @@ export function createApp() {
     cors({
       origin: env.corsOrigin,
       credentials: false,
-      allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+      allowedHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language"],
     }),
   );
+  app.use(localeMiddleware);
   app.use(express.json());
 
   app.get("/", (_req, res) => {

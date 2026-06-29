@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,11 +8,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/layouts/PageHeader";
+import { SendSalaryNotificationDialog } from "@/components/notifications/SendSalaryNotificationDialog";
+import { SendScheduleNotificationDialog } from "@/components/notifications/SendScheduleNotificationDialog";
 import { DataTable, type TableColumn } from "@/components/tables/DataTable";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useTableUrlFilters } from "@/hooks/use-table-url-filters";
 import { useI18n } from "@/i18n";
-import { api, normalizePaginated } from "@/lib/api-client";
-import type { NotificationChannel, NotificationStatus, NotificationType, PaginatedResponse } from "@19er/types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import type { NotificationChannel, NotificationStatus, NotificationType } from "@19er/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -42,40 +44,22 @@ function canResendNotification(status: NotificationStatus) {
   return status === "FAILED" || status === "PENDING";
 }
 
+const NOTIFICATION_STATUS_FILTERS = new Set<NotificationStatus>(["PENDING", "SENT", "FAILED"]);
+
 export function NotificationsPage() {
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
-  const [scheduleShiftId, setScheduleShiftId] = useState("");
-  const [scheduleChannel, setScheduleChannel] = useState<NotificationChannel>("EMAIL");
-  const [salaryRunId, setSalaryRunId] = useState("");
-  const [salaryChannel, setSalaryChannel] = useState<NotificationChannel>("EMAIL");
-  const [sendingSchedule, setSendingSchedule] = useState(false);
-  const [sendingSalary, setSendingSalary] = useState(false);
+  const tableFilters = useTableUrlFilters();
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [salaryOpen, setSalaryOpen] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
 
-  const { data: shifts } = useQuery({
-    queryKey: ["shifts-for-notify"],
-    queryFn: async () => {
-      const res = await api.get<PaginatedResponse<{ id: string; title: string | null; startTime: string }>>(
-        "/shifts",
-        { params: { limit: 50 } },
-      );
-      if (res.isError) throw new Error(res.message);
-      return normalizePaginated(res.data, 1, 50).items;
-    },
-  });
-
-  const { data: runs } = useQuery({
-    queryKey: ["runs-for-notify"],
-    queryFn: async () => {
-      const res = await api.get<PaginatedResponse<{ id: string; fromDate: string; toDate: string }>>(
-        "/payroll/runs",
-        { params: { limit: 50 } },
-      );
-      if (res.isError) throw new Error(res.message);
-      return normalizePaginated(res.data, 1, 50).items;
-    },
-  });
+  const rawStatusFilter = tableFilters.get("status");
+  const statusFilter = NOTIFICATION_STATUS_FILTERS.has(rawStatusFilter as NotificationStatus)
+    ? rawStatusFilter
+    : "";
+  const fromDate = tableFilters.get("fromDate");
+  const toDate = tableFilters.get("toDate");
 
   const columns: TableColumn<NotificationRow>[] = useMemo(
     () => [
@@ -101,42 +85,6 @@ export function NotificationsPage() {
     ],
     [t],
   );
-
-  async function sendSchedule() {
-    if (!scheduleShiftId) return;
-    setSendingSchedule(true);
-    try {
-      const res = await api.post(
-        "/notifications/send-schedule",
-        { shiftId: scheduleShiftId, channel: scheduleChannel },
-        { showSuccessToast: true, successMessage: t("notifications.scheduleSent") },
-      );
-      if (res.isError) throw new Error(res.message);
-      queryClient.invalidateQueries({ queryKey: ["notifications-table"] });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("notifications.failed"));
-    } finally {
-      setSendingSchedule(false);
-    }
-  }
-
-  async function sendSalary() {
-    if (!salaryRunId) return;
-    setSendingSalary(true);
-    try {
-      const res = await api.post(
-        "/notifications/send-salary",
-        { payrollRunId: salaryRunId, channel: salaryChannel },
-        { showSuccessToast: true, successMessage: t("notifications.salarySent") },
-      );
-      if (res.isError) throw new Error(res.message);
-      queryClient.invalidateQueries({ queryKey: ["notifications-table"] });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("notifications.failed"));
-    } finally {
-      setSendingSalary(false);
-    }
-  }
 
   async function resend(id: string) {
     setResendingId(id);
@@ -182,111 +130,64 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("notifications.title")} description={t("notifications.description")} />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("notifications.sendSchedule")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t("notifications.shift")}</Label>
-              <Select
-                dir={locale === "ar" ? "rtl" : "ltr"}
-                value={scheduleShiftId || "none"}
-                onValueChange={(value) => setScheduleShiftId(value === "none" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("notifications.selectShift")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t("notifications.selectShift")}</SelectItem>
-                  {shifts?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.title || t("shifts.untitled")} — {format(new Date(s.startTime), "MMM d, yyyy")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t("notifications.channel")}</Label>
-              <Select
-                dir={locale === "ar" ? "rtl" : "ltr"}
-                value={scheduleChannel}
-                onValueChange={(value) => setScheduleChannel(value as NotificationChannel)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EMAIL">{t("notifications.email")}</SelectItem>
-                  <SelectItem value="WHATSAPP">{t("notifications.whatsapp")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button disabled={!scheduleShiftId || sendingSchedule} onClick={() => void sendSchedule()}>
-              {sendingSchedule ? <Loader2 className="h-4 w-4 animate-spin" /> : t("notifications.sendSchedule")}
+      <PageHeader
+        title={t("notifications.title")}
+        description={t("notifications.description")}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              {t("notifications.sendSchedule")}
             </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("notifications.sendSalary")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t("notifications.payrollRun")}</Label>
-              <Select
-                dir={locale === "ar" ? "rtl" : "ltr"}
-                value={salaryRunId || "none"}
-                onValueChange={(value) => setSalaryRunId(value === "none" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("notifications.selectRun")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t("notifications.selectRun")}</SelectItem>
-                  {runs?.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {format(new Date(r.fromDate), "MMM d")} – {format(new Date(r.toDate), "MMM d, yyyy")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t("notifications.channel")}</Label>
-              <Select
-                dir={locale === "ar" ? "rtl" : "ltr"}
-                value={salaryChannel}
-                onValueChange={(value) => setSalaryChannel(value as NotificationChannel)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EMAIL">{t("notifications.email")}</SelectItem>
-                  <SelectItem value="WHATSAPP">{t("notifications.whatsapp")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button disabled={!salaryRunId || sendingSalary} onClick={() => void sendSalary()}>
-              {sendingSalary ? <Loader2 className="h-4 w-4 animate-spin" /> : t("notifications.sendSalary")}
+            <Button onClick={() => setSalaryOpen(true)}>
+              {t("notifications.sendSalary")}
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        }
+      />
 
       <DataTable<NotificationRow>
         columns={columnsWithResend}
         apiEndpoint="/notifications"
         queryKeyPrefix="notifications-table"
+        apiFilterKeys={["status", "fromDate", "toDate"]}
         enableActions={false}
         searchPlaceholder={t("notifications.searchPlaceholder")}
+        toolbar={
+          <>
+            <DateRangePicker
+              from={fromDate}
+              to={toDate}
+              onChange={(nextFrom, nextTo) => {
+                tableFilters.set({
+                  fromDate: nextFrom || null,
+                  toDate: nextTo || null,
+                });
+              }}
+              placeholder={t("common.dateRange")}
+            />
+            <Select
+              dir={locale === "ar" ? "rtl" : "ltr"}
+              value={statusFilter || "all"}
+              onValueChange={(value) =>
+                tableFilters.set({ status: value === "all" ? null : value })
+              }
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder={t("notifications.allStatus")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("notifications.allStatus")}</SelectItem>
+                <SelectItem value="PENDING">{t("notifications.statusPending")}</SelectItem>
+                <SelectItem value="SENT">{t("notifications.statusSent")}</SelectItem>
+                <SelectItem value="FAILED">{t("notifications.statusFailed")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        }
       />
+
+      <SendScheduleNotificationDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
+      <SendSalaryNotificationDialog open={salaryOpen} onOpenChange={setSalaryOpen} />
     </div>
   );
 }

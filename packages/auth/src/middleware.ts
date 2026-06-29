@@ -16,7 +16,7 @@ export function authenticate(
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
-      throw new UnauthorizedError("Missing or invalid authorization header");
+      throw new UnauthorizedError("auth.missing_token");
     }
 
     const token = authHeader.slice(7);
@@ -24,7 +24,7 @@ export function authenticate(
     req.user = verifyAccessToken(token, config);
     next();
   } catch {
-    next(new UnauthorizedError("Invalid or expired access token"));
+    next(new UnauthorizedError("auth.invalid_token"));
   }
 }
 
@@ -36,7 +36,7 @@ export function authorize(...roles: UserRole[]) {
     }
 
     if (!roles.includes(req.user.role as UserRole)) {
-      next(new ForbiddenError("Insufficient permissions"));
+      next(new ForbiddenError("auth.insufficient_permissions"));
       return;
     }
 

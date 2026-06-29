@@ -9,7 +9,7 @@ import {
 } from "@/components/shifts/shift-form-utils";
 import { ChoiceCard } from "@/components/ui/choice-card";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -104,12 +104,6 @@ export function CreateShiftDialog({ open, onOpenChange }: CreateShiftDialogProps
       });
     }
   }, [open, form]);
-
-  useEffect(() => {
-    if (fromDate && !toDate) {
-      form.setValue("toDate", fromDate);
-    }
-  }, [fromDate, toDate, form]);
 
   const { data: candidates, isLoading: candidatesLoading } = useQuery({
     queryKey: ["shift-candidates", fromDate, toDate, employeeSearch],
@@ -271,30 +265,21 @@ export function CreateShiftDialog({ open, onOpenChange }: CreateShiftDialogProps
               <div className="space-y-2">
                 <Label>{t("shifts.dayRange")}</Label>
                 <p className="text-xs text-muted">{t("shifts.dayRangeHint")}</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t("shifts.dayFrom")}</Label>
-                  <Controller
-                    name="fromDate"
-                    control={form.control}
-                    render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-                  />
-                  {form.formState.errors.fromDate && (
-                    <p className="text-sm text-red-600">{form.formState.errors.fromDate.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("shifts.dayTo")}</Label>
-                  <Controller
-                    name="toDate"
-                    control={form.control}
-                    render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-                  />
-                  {form.formState.errors.toDate && (
-                    <p className="text-sm text-red-600">{form.formState.errors.toDate.message}</p>
-                  )}
-                </div>
+                <DateRangePicker
+                  from={fromDate}
+                  to={toDate}
+                  onChange={(nextFrom, nextTo) => {
+                    form.setValue("fromDate", nextFrom, { shouldValidate: true });
+                    form.setValue("toDate", nextTo, { shouldValidate: true });
+                  }}
+                  placeholder={t("shifts.dayRange")}
+                  className="w-full"
+                />
+                {(form.formState.errors.fromDate || form.formState.errors.toDate) && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.fromDate?.message ?? form.formState.errors.toDate?.message}
+                  </p>
+                )}
               </div>
               {dayCount > 0 && (
                 <p className="text-sm font-medium text-foreground">

@@ -16,7 +16,7 @@ async function ensureAssignment(shiftId: string, employeeId: string) {
     where: { shiftId_employeeId: { shiftId, employeeId } },
   });
   if (!assignment) {
-    throw new ForbiddenError("Employee is not assigned to this shift");
+    throw new ForbiddenError("attendance.not_assigned");
   }
 }
 
@@ -27,7 +27,7 @@ export async function checkIn(
 ) {
   const employeeId = input.employeeId ?? requesterId;
   if (requesterRole === "EMPLOYEE" && employeeId !== requesterId) {
-    throw new ForbiddenError("Cannot check in for another employee");
+    throw new ForbiddenError("attendance.cannot_check_in_other");
   }
 
   await ensureAssignment(input.shiftId, employeeId);
@@ -36,12 +36,12 @@ export async function checkIn(
     where: { employeeId_shiftId: { employeeId, shiftId: input.shiftId } },
   });
   if (existing?.checkIn) {
-    throw new BadRequestError("Already checked in for this shift");
+    throw new BadRequestError("attendance.already_checked_in");
   }
 
   const now = new Date();
   const shift = await prisma.shift.findUnique({ where: { id: input.shiftId } });
-  if (!shift) throw new NotFoundError("Shift not found");
+  if (!shift) throw new NotFoundError("shift.not_found");
 
   const isLate = now > shift.startTime;
 
@@ -94,7 +94,7 @@ export async function checkOut(
 ) {
   const employeeId = input.employeeId ?? requesterId;
   if (requesterRole === "EMPLOYEE" && employeeId !== requesterId) {
-    throw new ForbiddenError("Cannot check out for another employee");
+    throw new ForbiddenError("attendance.cannot_check_out_other");
   }
 
   const attendance = await prisma.attendance.findUnique({
@@ -102,10 +102,10 @@ export async function checkOut(
     include: { shift: true },
   });
   if (!attendance?.checkIn) {
-    throw new BadRequestError("Must check in before checking out");
+    throw new BadRequestError("attendance.check_in_first");
   }
   if (attendance.checkOut) {
-    throw new BadRequestError("Already checked out for this shift");
+    throw new BadRequestError("attendance.already_checked_out");
   }
 
   return prisma.attendance.update({
@@ -249,7 +249,7 @@ export async function listAttendance(query: {
     try {
       return buildDateRangeWhere("startTime", normalized.fromDate, normalized.toDate);
     } catch (err) {
-      throw new BadRequestError(err instanceof Error ? err.message : "Invalid date range");
+      throw new BadRequestError("common.invalid_date_range");
     }
   })();
   if (shiftStartRange) {

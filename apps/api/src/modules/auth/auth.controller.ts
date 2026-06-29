@@ -1,5 +1,7 @@
 import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "@19er/auth";
+import { env } from "../../config/env.js";
+import { isAdminPortalRequest } from "../../shared/request-origin.js";
 import { sendSuccess } from "../../shared/response.js";
 import * as authService from "./auth.service.js";
 import {
@@ -30,7 +32,8 @@ export async function loginHandler(
 ): Promise<void> {
   try {
     const input = loginSchema.parse(req.body);
-    const result = await authService.login(input);
+    const fromAdminPortal = isAdminPortalRequest(req, env.apiPublicAdmin);
+    const result = await authService.login(input, { fromAdminPortal });
     sendSuccess(res, result);
   } catch (err) {
     next(err);

@@ -142,7 +142,7 @@ export async function getUserById(id: string) {
       updatedAt: true,
     },
   });
-  if (!user) throw new NotFoundError("User not found");
+  if (!user) throw new NotFoundError("user.not_found");
   return user;
 }
 
@@ -150,7 +150,7 @@ export async function createUser(input: CreateUserInput) {
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email: input.email }, { phone: input.phone }] },
   });
-  if (existing) throw new ConflictError("Email or phone already in use");
+  if (existing) throw new ConflictError("auth.email_or_phone_in_use");
 
   const password = await hashPassword(input.password);
   return prisma.user.create({
@@ -183,7 +183,7 @@ export async function updateUser(id: string, input: UpdateUserInput) {
         OR: orConditions,
       },
     });
-    if (existing) throw new ConflictError("Email or phone already in use");
+    if (existing) throw new ConflictError("auth.email_or_phone_in_use");
   }
 
   const data: Record<string, unknown> = { ...input };

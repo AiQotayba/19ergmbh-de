@@ -115,7 +115,7 @@ async function buildPayrollPreview(
       select: { id: true, fullName: true, email: true, hourlyRate: true, role: true },
     });
     if (!employee || employee.role !== "EMPLOYEE") {
-      throw new NotFoundError("Employee not found");
+      throw new NotFoundError("employee.not_found");
     }
     const { role: _, ...employeeData } = employee;
     employeeMeta.set(employeeId, employeeData);
@@ -166,7 +166,7 @@ export async function runPayroll(input: PayrollRunInput) {
   const lines = await buildPayrollPreview(from, to, input.employeeId);
 
   if (lines.length === 0) {
-    throw new BadRequestError("No payroll records to create for this period");
+    throw new BadRequestError("payroll.no_records");
   }
 
   const payrollRun = await prisma.payrollRun.create({
@@ -248,7 +248,7 @@ export async function getPayrollRunById(id: string) {
       },
     },
   });
-  if (!run) throw new NotFoundError("Payroll run not found");
+  if (!run) throw new NotFoundError("payroll.run_not_found");
   return run;
 }
 
@@ -323,14 +323,14 @@ export async function getPayrollById(id: string) {
       payrollRun: true,
     },
   });
-  if (!payroll) throw new NotFoundError("Payroll not found");
+  if (!payroll) throw new NotFoundError("payroll.not_found");
   return payroll;
 }
 
 export async function markPayrollPaid(id: string, input: PayPayrollInput) {
   const payroll = await getPayrollById(id);
   if (payroll.isPaid) {
-    throw new BadRequestError("Payroll already marked as paid");
+    throw new BadRequestError("payroll.already_paid");
   }
 
   const paidAmount = input.paidAmount ?? payroll.salary;

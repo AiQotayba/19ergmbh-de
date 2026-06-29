@@ -17,6 +17,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@19er/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@19er/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -99,6 +102,9 @@ importers:
       '@19er/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@19er/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@19er/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -154,6 +160,9 @@ importers:
 
   apps/employee:
     dependencies:
+      '@19er/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@19er/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -301,6 +310,12 @@ importers:
       tsx:
         specifier: ^4.19.4
         version: 4.22.4
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
+  packages/i18n:
+    devDependencies:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

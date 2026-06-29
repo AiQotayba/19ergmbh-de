@@ -1,4 +1,5 @@
 import { api, normalizePaginated } from "@/lib/api-client";
+import { useI18n } from "@/i18n";
 import { readTableFilters, tableFilterValuesKey, tableQueryParamKey } from "@/lib/table-url";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,7 @@ function DataTableInner<T extends object & { id?: string }>({
   urlKeyPrefix,
   apiFilterKeys,
 }: DataTableProps<T>) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -306,15 +308,18 @@ function DataTableInner<T extends object & { id?: string }>({
         const endpoint = deleteEndpoint
           ? deleteEndpoint(selectedRow)
           : `${apiEndpoint.replace(/\?.*$/, "")}/${(selectedRow as { id: string }).id}`;
-        const response = await api.delete(endpoint, { showSuccessToast: true, successMessage: "Deleted" });
+        const response = await api.delete(endpoint, {
+          showSuccessToast: true,
+          successMessage: t("common.deleted"),
+        });
         if (response.isError) throw new Error(response.message);
       }
-      toast.success("Deleted successfully");
+      toast.success(t("common.deleted"));
       queryClient.invalidateQueries({ queryKey: [queryKeyPrefix ?? "table-data"] });
       setDeleteDialogOpen(false);
       setSelectedRow(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Delete failed");
+      toast.error(err instanceof Error ? err.message : t("common.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -484,7 +489,7 @@ function DataTableInner<T extends object & { id?: string }>({
               disabled={pagination.current_page <= 1}
               onClick={() => updateParams({ page: String(pagination.current_page - 1) })}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
             </Button>
             <span className="min-w-[80px] text-center text-sm">
               {pagination.current_page} / {pagination.last_page}
@@ -495,7 +500,7 @@ function DataTableInner<T extends object & { id?: string }>({
               disabled={pagination.current_page >= pagination.last_page}
               onClick={() => updateParams({ page: String(pagination.current_page + 1) })}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>

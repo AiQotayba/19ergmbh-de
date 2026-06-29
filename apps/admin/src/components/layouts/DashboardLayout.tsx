@@ -22,7 +22,6 @@ import {
   LogOut,
   Menu,
   User,
-  UserCircle,
   Users,
   Wallet,
   X,
@@ -91,46 +90,57 @@ export function DashboardLayout() {
           sidebarSide === "right" ? "right-0" : "left-0",
         )}
       >
-        <div className={cn("flex shrink-0 items-center px-4", collapsed ? "justify-center" : "justify-between gap-2")}>
-          <div className={cn("flex items-center gap-3 overflow-hidden", collapsed && "justify-center")}>
+        <div className="relative shrink-0 px-4">
+          <div className="absolute top-0 flex gap-1 ltr:right-0 rtl:left-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden shrink-0 text-muted lg:inline-flex"
+              onClick={() => setCollapsed((c) => !c)}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {dir === "rtl" ? (
+                collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+              ) : (
+                collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted lg:hidden"
+              onClick={() => setMobileOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div
+            className={cn(
+              "flex flex-col",
+              collapsed ? "items-end pt-1" : "items-center pt-1",
+            )}
+          >
             <img
               src="/logo.png"
               alt="19er GmbH"
-              className={cn("shrink-0 object-contain", collapsed ? "h-10 w-10" : "h-12 w-12")}
+              className={cn(
+                "shrink-0 object-contain",
+                collapsed ? "h-10 mt-10 w-20" : "h-30 w-30",
+              )}
             />
             {!collapsed && (
-              <div className="min-w-0">
-                <p className="brand-title truncate text-base leading-tight">
-                  <span className="brand-title-navy">19er </span>
-                  <span className="brand-title-orange">GmbH</span>
+              <>
+                <p className="brand-title text-base leading-tight">
+                  <span className="brand-title-navy">{t("login.companyNameNavy")}</span>
+                  <span className="brand-title-orange">{t("login.companyNameOrange")}</span>
                 </p>
-                <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted">
-                  Logistik & Transport
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                  {t("login.tagline")}
                 </p>
-              </div>
+              </>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden shrink-0 text-muted lg:inline-flex"
-            onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {dir === "rtl" ? (
-              collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-            ) : (
-              collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
 
         <nav className="mt-6 flex min-h-0 flex-1 flex-col gap-1 overflow-hidden px-3">
@@ -179,7 +189,7 @@ export function DashboardLayout() {
             onClick={() => setLogoutOpen(true)}
             title={t("common.logout")}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0 ltr:rotate-180" />
             {!collapsed && <span>{t("common.logout")}</span>}
           </Button>
         </div>

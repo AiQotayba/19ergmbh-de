@@ -30,11 +30,55 @@ describe("Auth API", () => {
   });
 
   it("POST /auth/login validates request body", async () => {
-    const res = await request(getApp()).post("/auth/login").send({ email: "not-an-email" });
+    const res = await request(getApp())
+      .post("/auth/login")
+      .set("Accept-Language", "en")
+      .send({ email: "not-an-email" });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.error).toBe("Validation failed");
+    expect(res.body.code).toBe("common.validation_failed");
+    expect(res.body.error).toBe("Please check the highlighted fields");
+  });
+
+  it("POST /auth/login returns localized errors from Accept-Language", async () => {
+    const deRes = await request(getApp())
+      .post("/auth/login")
+      .set("Accept-Language", "de")
+      .send({ email: SEED.admin.email, password: "wrong-password" });
+
+    expect(deRes.status).toBe(401);
+    expect(deRes.body.code).toBe("auth.invalid_credentials");
+    expect(deRes.body.error).toBe("E-Mail oder Passwort ist falsch");
+
+    const arRes = await request(getApp())
+      .post("/auth/login")
+      .set("Accept-Language", "ar")
+      .send({ email: SEED.admin.email, password: "wrong-password" });
+
+    expect(arRes.status).toBe(401);
+    expect(arRes.body.code).toBe("auth.invalid_credentials");
+    expect(arRes.body.error).toBe("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+  });
+
+  it("POST /auth/login blocks employees from admin portal origin", async () => {
+    const adminOrigin = process.env.API_PUBLIC_ADMIN?.split(",")[0]?.trim() ?? "http://localhost:5173";
+
+    const res = await request(getApp())
+      .post("/auth/login")
+      .set("Origin", adminOrigin)
+      .send(SEED.employee);
+
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+    expect(res.body.code).toBe("auth.admin_only");
+  });
+
+  it("POST /auth/login allows employees without admin portal origin", async () => {
+    const res = await request(getApp()).post("/auth/login").send(SEED.employee);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.role).toBe("EMPLOYEE");
   });
 
   it("POST /auth/refresh rotates tokens", async () => {

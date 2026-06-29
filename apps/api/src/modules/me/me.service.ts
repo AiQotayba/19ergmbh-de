@@ -24,7 +24,7 @@ export async function getProfile(userId: string) {
     where: { id: userId },
     select: profileSelect,
   });
-  if (!user) throw new NotFoundError("User not found");
+  if (!user) throw new NotFoundError("auth.user_not_found");
   return user;
 }
 
@@ -37,7 +37,7 @@ export async function updateProfile(userId: string, input: UpdateProfileInput) {
       OR: [{ email: input.email }, { phone: input.phone }],
     },
   });
-  if (existing) throw new ConflictError("Email or phone already in use");
+  if (existing) throw new ConflictError("auth.email_or_phone_in_use");
 
   return prisma.user.update({
     where: { id: userId },

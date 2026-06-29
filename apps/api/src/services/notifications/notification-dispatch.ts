@@ -14,7 +14,7 @@ async function loadNotification(id: string) {
       employee: { select: { id: true, fullName: true, email: true, phone: true } },
     },
   });
-  if (!notification) throw new NotFoundError("Notification not found");
+  if (!notification) throw new NotFoundError("notification.not_found");
   return notification;
 }
 

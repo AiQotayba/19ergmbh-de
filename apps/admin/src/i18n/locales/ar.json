@@ -15,6 +15,7 @@
     "confirmDelete": "تأكيد الحذف",
     "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
     "deleted": "تم الحذف بنجاح",
+    "deleteFailed": "فشل الحذف",
     "all": "الكل",
     "active": "نشط",
     "inactive": "غير نشط",
@@ -46,10 +47,11 @@
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
     "signIn": "تسجيل الدخول",
+    "companyNameNavy": "19er ",
+    "companyNameOrange": "GmbH",
     "tagline": "اللوجستيات والنقل",
-    "heroTitle": "إدارة الورديات",
-    "heroSubtitle": "والرواتب",
-    "heroDesc": "إدارة الموظفين والجداول والحضور والرواتب — كل ذلك في مكان واحد.",
+    "adminOnly": "الدخول للإدارة فقط",
+    "signedIn": "تم تسجيل الدخول بنجاح",
     "failed": "فشل تسجيل الدخول"
   },
   "dashboard": {
@@ -99,6 +101,8 @@
     "password": "كلمة المرور",
     "hourlyRateLabel": "الأجر بالساعة (€)",
     "activeAccount": "حساب نشط",
+    "created": "تم إنشاء المستخدم بنجاح",
+    "updated": "تم تحديث المستخدم بنجاح",
     "deleteConfirm": "حذف {{name}}؟ لا يمكن التراجع عن ذلك."
   },
   "shifts": {
@@ -291,6 +295,10 @@
     "employee": "الموظف",
     "type": "النوع",
     "status": "الحالة",
+    "allStatus": "كل الحالات",
+    "statusPending": "معلق",
+    "statusSent": "مُرسَل",
+    "statusFailed": "فشل",
     "sent": "تاريخ الإرسال",
     "resend": "إعادة الإرسال",
     "scheduleSent": "تم إرسال إشعارات الجدول",

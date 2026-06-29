@@ -15,6 +15,7 @@
     "confirmDelete": "Löschen bestätigen",
     "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleted": "Erfolgreich gelöscht",
+    "deleteFailed": "Löschen fehlgeschlagen",
     "all": "Alle",
     "active": "Aktiv",
     "inactive": "Inaktiv",
@@ -46,10 +47,11 @@
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen",
     "signIn": "Anmelden",
+    "companyNameNavy": "19er ",
+    "companyNameOrange": "GmbH",
     "tagline": "Logistik & Transport",
-    "heroTitle": "Schicht & Gehalt",
-    "heroSubtitle": "Verwaltung",
-    "heroDesc": "Verwalten Sie Mitarbeiter, Zeitpläne, Anwesenheit und Gehaltsabrechnung — alles an einem Ort.",
+    "adminOnly": "Nur für Administratoren",
+    "signedIn": "Erfolgreich angemeldet",
     "failed": "Anmeldung fehlgeschlagen"
   },
   "dashboard": {
@@ -99,6 +101,8 @@
     "password": "Passwort",
     "hourlyRateLabel": "Stundensatz (€)",
     "activeAccount": "Aktives Konto",
+    "created": "Benutzer erfolgreich erstellt",
+    "updated": "Benutzer erfolgreich aktualisiert",
     "deleteConfirm": "{{name}} löschen? Dies kann nicht rückgängig gemacht werden."
   },
   "shifts": {
@@ -291,6 +295,10 @@
     "employee": "Mitarbeiter",
     "type": "Typ",
     "status": "Status",
+    "allStatus": "Alle Status",
+    "statusPending": "Ausstehend",
+    "statusSent": "Gesendet",
+    "statusFailed": "Fehlgeschlagen",
     "sent": "Gesendet",
     "resend": "Erneut senden",
     "scheduleSent": "Dienstplan-Benachrichtigungen gesendet",

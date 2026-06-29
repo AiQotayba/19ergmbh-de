@@ -1,7 +1,16 @@
 import { toast } from "sonner";
 import type { PaginatedResponse } from "@19er/types";
+import { translate, type Locale } from "@19er/i18n";
 import { refreshAccessToken } from "./auth-session";
 import { clearTokens, getToken } from "./auth-storage";
+
+const LOCALE_STORAGE_KEY = "19er-employee-locale";
+
+function getStoredLocale(): Locale {
+  const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+  if (stored === "en" || stored === "de" || stored === "ar") return stored;
+  return "de";
+}
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -36,6 +45,7 @@ export interface ApiOptions {
 export interface ApiConfig {
   baseUrl: string;
   getToken?: () => string | null | undefined;
+  getLang?: () => string | null | undefined;
   showToast?: (message: string, type: ToastType) => void;
   onUnauthorized?: () => void;
   onError?: (error: Error, response?: Response) => void;
@@ -151,7 +161,7 @@ class ApiCore {
         return {
           ...apiResponse,
           isError: true,
-          message: apiResponse.message || "Session expired. Please sign in again.",
+          message: apiResponse.message || translate(getStoredLocale(), "common.session_expired"),
         };
       }
 
@@ -203,6 +213,13 @@ class ApiCore {
       ...this.config.defaultHeaders,
     };
 
+    if (this.config.getLang) {
+      const lang = this.config.getLang();
+      if (lang) {
+        headers["Accept-Language"] = lang;
+      }
+    }
+
     if (this.config.getToken) {
       const token = this.config.getToken();
       if (token) {
@@ -245,12 +262,18 @@ class ApiCore {
     }
 
     if (response.isError && options.showErrorToast !== false && this.config.showToast) {
-      this.config.showToast(options.errorMessage || response.message || "Request failed", "error");
+      this.config.showToast(
+        options.errorMessage || response.message || translate(getStoredLocale(), "common.request_failed"),
+        "error",
+      );
       return;
     }
 
     if (options.showSuccessToast && this.config.showToast) {
-      this.config.showToast(options.successMessage || response.message || "Success", "success");
+      this.config.showToast(
+        options.successMessage || response.message || translate(getStoredLocale(), "common.success"),
+        "success",
+      );
     } else if (options.msgs && this.config.showToast && response.message) {
       this.config.showToast(response.message, "success");
     }
@@ -284,6 +307,7 @@ class ApiCore {
 const apiCore = new ApiCore({
   baseUrl: import.meta.env.VITE_API_URL ?? "/api",
   getToken,
+  getLang: getStoredLocale,
   showToast: (message, type) => {
     if (type === "success") toast.success(message);
     else if (type === "error") toast.error(message);

@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -23,7 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated || user?.role !== "ADMIN") return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 

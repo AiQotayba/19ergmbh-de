@@ -111,6 +111,6 @@ describe("Shifts API", () => {
       .send({ shiftId: shiftBRes.body.data.id, employeeId });
 
     expect(conflict.status).toBe(409);
-    expect(conflict.body.error).toContain("overlapping");
+    expect(conflict.body.code).toBe("shift.overlapping_assignment");
   });
 });

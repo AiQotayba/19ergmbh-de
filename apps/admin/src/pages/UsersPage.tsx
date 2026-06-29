@@ -179,7 +179,7 @@ export function UsersPage() {
       };
       const res = await api.post("/admin/users", payload, {
         showSuccessToast: true,
-        successMessage: "User created",
+        successMessage: t("users.created"),
       });
       if (res.isError) throw new Error(res.message);
       setDialogOpen(false);
@@ -205,7 +205,7 @@ export function UsersPage() {
       };
       const res = await api.put(`/admin/users/${editing.id}`, payload, {
         showSuccessToast: true,
-        successMessage: "User updated",
+        successMessage: t("users.updated"),
       });
       if (res.isError) throw new Error(res.message);
       setDialogOpen(false);

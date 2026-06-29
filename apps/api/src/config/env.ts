@@ -20,12 +20,20 @@ if (nodeEnv === "test") {
   process.env.WHATSAPP_SENDER = "";
 }
 
+function parseOrigins(value: string | undefined, fallback = ""): string[] {
+  return (value ?? fallback)
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+}
+
 export const env = {
   port: Number(process.env.API_PORT) || 3002,
-  corsOrigin: (process.env.CORS_ORIGIN ?? "http://localhost:5173,http://localhost:5174")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
+  corsOrigin: parseOrigins(
+    process.env.CORS_ORIGIN,
+    "http://localhost:5173,http://localhost:5174",
+  ),
+  apiPublicAdmin: parseOrigins(process.env.API_PUBLIC_ADMIN, "http://localhost:5173"),
   nodeEnv,
   smtpHost: process.env.SMTP_HOST ?? "",
   smtpPort: Number(process.env.SMTP_PORT ?? 587),

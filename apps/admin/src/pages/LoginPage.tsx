@@ -35,7 +35,12 @@ export function LoginPage() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("login.failed"));
+      const message = err instanceof Error ? err.message : t("login.failed");
+      if (err instanceof Error && (err.message === "ADMIN_ACCESS_ONLY" || err.message === "auth.admin_only")) {
+        setError(t("login.adminOnly"));
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -48,21 +53,19 @@ export function LoginPage() {
         <div className="absolute -right-20 top-1/3 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
         <div className="absolute -left-10 bottom-1/4 h-48 w-48 rounded-full bg-accent/10 blur-2xl" />
 
-        <div className="relative z-10">
-          <img src="/logo.png" alt="19er GmbH" className="h-28 w-32 object-contain p-4 bg-amber-50 rounded-2xl" />
-          <h1 className="mt-10 text-4xl leading-tight">
-            {t("login.heroTitle")}
-            <br />
-            <span className="text-accent">{t("login.heroSubtitle")}</span>
+        <div className="relative z-10 flex flex-1 flex-col justify-center">
+          <img
+            src="/logo.png"
+            alt="19er GmbH"
+            className="h-28 w-32 object-contain rounded-2xl bg-amber-50 p-4"
+          />
+          <h1 className="mt-8 brand-title text-4xl leading-tight">
+            <span className="text-white">{t("login.companyNameNavy")}</span>
+            <span className="text-accent">{t("login.companyNameOrange")}</span>
           </h1>
-          <p className="mt-4 max-w-sm text-white/75">{t("login.heroDesc")}</p>
-          <div className="mt-8 flex items-center gap-3">
-            <div className="h-px w-8 bg-accent" />
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-              {t("login.tagline")}
-            </p>
-            <div className="h-px w-8 bg-accent" />
-          </div>
+          <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+            {t("login.tagline")}
+          </p>
         </div>
         <p className="relative z-10 text-sm text-white/50">© 19er GmbH</p>
       </div>
@@ -73,11 +76,20 @@ export function LoginPage() {
         </div>
         <Card className="w-full max-w-md border-0 shadow-[var(--shadow-float)]">
           <CardHeader className="text-center">
-            <img
-              src="/logo.png"
-              alt="19er GmbH"
-              className="mx-auto mb-4 h-16 w-16 object-contain lg:hidden"
-            />
+            <div className="mb-6 flex flex-col items-center lg:hidden">
+              <img
+                src="/logo.png"
+                alt="19er GmbH"
+                className="h-20 w-24 object-contain rounded-2xl bg-amber-50 p-3"
+              />
+              <h1 className="mt-4 brand-title text-2xl leading-tight">
+                <span className="brand-title-navy">{t("login.companyNameNavy")}</span>
+                <span className="brand-title-orange">{t("login.companyNameOrange")}</span>
+              </h1>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                {t("login.tagline")}
+              </p>
+            </div>
             <CardTitle className="brand-title text-2xl">
               <span className="brand-title-navy">{t("login.title")}</span>
             </CardTitle>

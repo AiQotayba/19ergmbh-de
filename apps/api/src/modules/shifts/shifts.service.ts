@@ -24,7 +24,7 @@ async function assertEmployeeCanBeAssigned(
 ) {
   const employee = await prisma.user.findUnique({ where: { id: employeeId } });
   if (!employee || employee.role !== "EMPLOYEE") {
-    throw new NotFoundError("Employee not found");
+    throw new NotFoundError("employee.not_found");
   }
 
   const existingAssignments = await prisma.shiftEmployee.findMany({
@@ -34,11 +34,11 @@ async function assertEmployeeCanBeAssigned(
 
   for (const assignment of existingAssignments) {
     if (assignment.shiftId === schedule.id) {
-      throw new ConflictError("Employee already assigned to this shift");
+      throw new ConflictError("shift.already_assigned");
     }
     const existing = resolveShiftSchedule(assignment.shift);
     if (shiftSchedulesConflict(schedule, existing)) {
-      throw new ConflictError("Employee has an overlapping shift assignment");
+      throw new ConflictError("shift.overlapping_assignment");
     }
   }
 }
@@ -122,7 +122,7 @@ export async function listShifts(query: {
         where.toDate = { gte: parseDateOnly(filterFrom) };
       }
     } catch (err) {
-      throw new BadRequestError(err instanceof Error ? err.message : "Invalid date range");
+      throw new BadRequestError("common.invalid_date_range");
     }
   }
 
@@ -171,7 +171,7 @@ export async function getShiftById(id: string) {
       },
     },
   });
-  if (!shift) throw new NotFoundError("Shift not found");
+  if (!shift) throw new NotFoundError("shift.not_found");
   return shift;
 }
 
@@ -180,7 +180,7 @@ export async function createShift(createdById: string, input: CreateShiftInput) 
   try {
     schedule = resolveShiftScheduleFromInput(input);
   } catch (err) {
-    throw new BadRequestError(err instanceof Error ? err.message : "Invalid shift schedule");
+    throw new BadRequestError("shift.invalid_schedule");
   }
 
   const employeeIds = [...new Set(input.employeeIds ?? [])];
@@ -238,7 +238,7 @@ export async function updateShift(id: string, input: UpdateShiftInput) {
       dailyEndTime: input.dailyEndTime ?? current.dailyEndTime,
     });
   } catch (err) {
-    throw new BadRequestError(err instanceof Error ? err.message : "Invalid shift schedule");
+    throw new BadRequestError("shift.invalid_schedule");
   }
 
   const data: Prisma.ShiftUpdateInput = {
@@ -300,7 +300,7 @@ export async function unassignEmployee(input: AssignShiftInput) {
       },
     },
   });
-  if (!assignment) throw new NotFoundError("Assignment not found");
+  if (!assignment) throw new NotFoundError("shift.assignment_not_found");
   await prisma.shiftEmployee.delete({ where: { id: assignment.id } });
 }
 
@@ -334,7 +334,7 @@ export async function listShiftCandidates(query: {
         ...(filterFrom ? { toDate: { gte: parseDateOnly(filterFrom) } } : {}),
       };
     } catch (err) {
-      throw new BadRequestError(err instanceof Error ? err.message : "Invalid date range");
+      throw new BadRequestError("common.invalid_date_range");
     }
   }
 
@@ -424,7 +424,7 @@ function buildShiftOverlapWhere(fromDate?: string, toDate?: string): Prisma.Shif
       shiftWhere.toDate = { gte: parseDateOnly(filterFrom) };
     }
   } catch (err) {
-    throw new BadRequestError(err instanceof Error ? err.message : "Invalid date range");
+    throw new BadRequestError("common.invalid_date_range");
   }
   return shiftWhere;
 }

@@ -16,6 +16,7 @@
   "dependencies": {
     "@19er/auth": "workspace:*",
     "@19er/db": "workspace:*",
+    "@19er/i18n": "workspace:*",
     "@19er/shared": "workspace:*",
     "@19er/types": "workspace:*",
     "cors": "^2.8.5",

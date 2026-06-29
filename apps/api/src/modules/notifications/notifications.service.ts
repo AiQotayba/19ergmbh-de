@@ -1,6 +1,6 @@
 import { prisma } from "@19er/db";
 import type { NotificationChannel, NotificationType } from "@19er/db";
-import { BadRequestError, NotFoundError, parsePagination } from "@19er/shared";
+import { BadRequestError, NotFoundError, buildDateRangeWhere, parseListDateRange, parsePagination } from "@19er/shared";
 import type { z } from "zod";
 import { dispatchNotification } from "../../services/notifications/notification-dispatch.js";
 import {
@@ -116,7 +116,7 @@ async function enqueueStaggered(
 
 export async function createNotification(input: SendNotificationInput) {
   const employee = await prisma.user.findUnique({ where: { id: input.employeeId } });
-  if (!employee) throw new NotFoundError("Employee not found");
+  if (!employee) throw new NotFoundError("employee.not_found");
 
   const [notification] = await enqueueStaggered([
     {
@@ -140,9 +140,9 @@ export async function sendScheduleNotifications(
       employees: { include: { employee: true } },
     },
   });
-  if (!shift) throw new NotFoundError("Shift not found");
+  if (!shift) throw new NotFoundError("shift.not_found");
   if (shift.employees.length === 0) {
-    throw new BadRequestError("No employees assigned to this shift");
+    throw new BadRequestError("shift.no_employees_assigned");
   }
 
   const channel = input.channel ?? "EMAIL";
@@ -178,15 +178,15 @@ export async function sendSalaryNotifications(
       payrolls: { include: { employee: true } },
     },
   });
-  if (!run) throw new NotFoundError("Payroll run not found");
+  if (!run) throw new NotFoundError("payroll.run_not_found");
   if (run.payrolls.length === 0) {
-    throw new BadRequestError("No payroll records in this run");
+    throw new BadRequestError("notification.no_payroll_records");
   }
 
   if (run.lastSalaryNotifyAt) {
     const elapsed = Date.now() - run.lastSalaryNotifyAt.getTime();
     if (elapsed < SALARY_NOTIFY_COOLDOWN_MS) {
-      throw new BadRequestError("Please wait before sending salary notifications again");
+      throw new BadRequestError("notification.salary_cooldown");
     }
   }
 
@@ -226,13 +226,30 @@ export async function listNotifications(query: {
   employeeId?: string;
   type?: string;
   status?: string;
+  fromDate?: string;
+  toDate?: string;
+  from?: string;
+  to?: string;
+  dateRange?: string;
 }) {
   const { page, limit, skip } = parsePagination(query.page, query.limit);
+  const { fromDate, toDate } = parseListDateRange(query);
   const where: Record<string, unknown> = {};
 
   if (query.employeeId) where.employeeId = query.employeeId;
   if (query.type) where.type = query.type;
   if (query.status) where.status = query.status;
+
+  const createdAtRange = (() => {
+    try {
+      return buildDateRangeWhere("createdAt", fromDate, toDate);
+    } catch (err) {
+      throw new BadRequestError("common.invalid_date_range");
+    }
+  })();
+  if (createdAtRange) {
+    Object.assign(where, createdAtRange);
+  }
 
   const [items, total] = await Promise.all([
     prisma.notification.findMany({
@@ -252,7 +269,7 @@ export async function listNotifications(query: {
 
 export async function resendNotification(id: string) {
   const notification = await prisma.notification.findUnique({ where: { id } });
-  if (!notification) throw new NotFoundError("Notification not found");
+  if (!notification) throw new NotFoundError("notification.not_found");
 
   await prisma.notification.update({
     where: { id },

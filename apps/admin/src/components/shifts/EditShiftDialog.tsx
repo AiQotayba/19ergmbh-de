@@ -11,7 +11,7 @@ import {
 import { ChoiceCard } from "@/components/ui/choice-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Dialog,
   DialogContent,
@@ -144,12 +144,6 @@ export function EditShiftDialog({ shift, open, onOpenChange }: EditShiftDialogPr
       notes: shift.notes ?? "",
     });
   }, [open, shift, form]);
-
-  useEffect(() => {
-    if (fromDate && !toDate) {
-      form.setValue("toDate", fromDate);
-    }
-  }, [fromDate, toDate, form]);
 
   const { data: candidates, isLoading: candidatesLoading } = useQuery({
     queryKey: ["shift-candidates-edit", shift?.id, fromDate, toDate, employeeSearch],
@@ -317,24 +311,21 @@ export function EditShiftDialog({ shift, open, onOpenChange }: EditShiftDialogPr
               <div className="space-y-2">
                 <Label>{t("shifts.dayRange")}</Label>
                 <p className="text-xs text-muted">{t("shifts.dayRangeHint")}</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t("shifts.dayFrom")}</Label>
-                  <Controller
-                    name="fromDate"
-                    control={form.control}
-                    render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("shifts.dayTo")}</Label>
-                  <Controller
-                    name="toDate"
-                    control={form.control}
-                    render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-                  />
-                </div>
+                <DateRangePicker
+                  from={fromDate}
+                  to={toDate}
+                  onChange={(nextFrom, nextTo) => {
+                    form.setValue("fromDate", nextFrom, { shouldValidate: true });
+                    form.setValue("toDate", nextTo, { shouldValidate: true });
+                  }}
+                  placeholder={t("shifts.dayRange")}
+                  className="w-full"
+                />
+                {(form.formState.errors.fromDate || form.formState.errors.toDate) && (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.fromDate?.message ?? form.formState.errors.toDate?.message}
+                  </p>
+                )}
               </div>
               {dayCount > 0 && (
                 <p className="text-sm text-muted">{t("shifts.dayCount", { count: dayCount })}</p>

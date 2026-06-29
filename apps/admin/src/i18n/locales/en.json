@@ -15,6 +15,7 @@
     "confirmDelete": "Confirm delete",
     "cannotUndo": "This action cannot be undone.",
     "deleted": "Deleted successfully",
+    "deleteFailed": "Delete failed",
     "all": "All",
     "active": "Active",
     "inactive": "Inactive",
@@ -46,10 +47,11 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "signIn": "Sign in",
+    "companyNameNavy": "19er ",
+    "companyNameOrange": "GmbH",
     "tagline": "Logistik & Transport",
-    "heroTitle": "Shift & Payroll",
-    "heroSubtitle": "Management",
-    "heroDesc": "Manage employees, schedules, attendance, and payroll — all in one place.",
+    "adminOnly": "Admin access only",
+    "signedIn": "Signed in successfully",
     "failed": "Login failed"
   },
   "dashboard": {
@@ -99,6 +101,8 @@
     "password": "Password",
     "hourlyRateLabel": "Hourly rate (€)",
     "activeAccount": "Active account",
+    "created": "User created successfully",
+    "updated": "User updated successfully",
     "deleteConfirm": "Delete {{name}}? This cannot be undone."
   },
   "shifts": {
@@ -291,6 +295,10 @@
     "employee": "Employee",
     "type": "Type",
     "status": "Status",
+    "allStatus": "All statuses",
+    "statusPending": "Pending",
+    "statusSent": "Sent",
+    "statusFailed": "Failed",
     "sent": "Sent",
     "resend": "Resend",
     "scheduleSent": "Schedule notifications sent",

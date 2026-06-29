@@ -49,6 +49,7 @@ export async function sendWhatsAppMessage(
     console.info("[whatsapp] skipped (not configured):", message.slice(0, 80));
     return { ok: false, skipped: true };
   }
+  console.log({ message });
 
   const payload = {
     api_key: env.whatsappApiKey,
@@ -56,7 +57,7 @@ export async function sendWhatsAppMessage(
     number: normalizeWhatsAppNumber(number),
     message,
   };
-  console.log(payload);
+  console.log({ payload });
   try {
     const res = await fetch(`${env.whatsappApiBase}/send-message`, {
       method: "POST",
@@ -64,8 +65,9 @@ export async function sendWhatsAppMessage(
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(timeoutMs),
     });
-
+    console.log({ res });
     const result = await parseWhatsAppResponse(res);
+    console.log({ result });
     if (!result.ok) {
       console.log(result);
       console.error("[whatsapp] send-message failed:", result.msg ?? res.status);

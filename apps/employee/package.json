@@ -10,6 +10,7 @@
     "icons:generate": "node scripts/generate-app-icons.mjs"
   },
   "dependencies": {
+    "@19er/i18n": "workspace:*",
     "@19er/types": "workspace:*",
     "@hookform/resolvers": "^5.1.1",
     "@tanstack/react-query": "^5.81.5",
